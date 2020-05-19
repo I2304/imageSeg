@@ -2,6 +2,9 @@
 
 og = imread('./us_two_inc/density.png');
 img = mat2gray(og);
+img(:, :) = 1;
+img(200:300, 200:300) = .05; 
+img(500:600, 500:600) = .05;
 
 img = img(1:min(size(img, 1), size(img, 2)), 1:min(size(img, 1), size(img, 2)));
 figure(1)
@@ -10,9 +13,9 @@ global M
 M = length(img);
 
 global rho_matrix
-rho_matrix = img; 
+rho_matrix = img;
 global q
-q = 5; 
+q = 2; 
 global pr
 pr = 1; 
 
@@ -43,9 +46,9 @@ ylim([0,1.5])
 applyBoundaryCondition(model,'neumann','Edge',1:4,'g',0,'q',0);
 
 specifyCoefficients(model,'m',0,'d',@dcoeffunction,'c',@ccoeffunction,'a',0,'f',0);
-r = [0,10];
+r = [0,40];
 
-generateMesh(model,'Hmax',0.02)
+generateMesh(model,'Hmax',0.05)
 results = solvepdeeig(model,r);
 mesh = results.Mesh;
 
@@ -56,7 +59,7 @@ figure(4)
 fig = pdeplot(model,'XYData',u(:,2));
 [xq,yq] = meshgrid(linspace(0, 1, M));
 uintrp = interpolateSolution(results,xq,yq,2);
-uintrp = reshape(uintrp,size(xq))./rho_matrix;
+uintrp = reshape(uintrp,size(xq))./((rho_matrix).^(1/2));
 figure(5)
 imagesc(uintrp)
 colorbar
@@ -78,7 +81,7 @@ dmatrix = ones(1,nr);
         if j == 0
             j = 1; 
         end
-        dmatrix(index) = 1;
+        dmatrix(index) = (rho_matrix(i,j))^(pr);
     end
 end
 
@@ -99,6 +102,6 @@ cmatrix = ones(1,nr);
         if j == 0
             j = 1; 
         end
-        cmatrix(index) = (rho_matrix(i, j))^q;
+        cmatrix(index) = (rho_matrix(i,j))^q;
     end
 end
