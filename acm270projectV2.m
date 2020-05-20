@@ -1,3 +1,6 @@
+
+%% DONT USE THIS FILE-- use acm270project.m instead. 
+
 %% Import image 
 
 og = imread('./us_usnccm/density.png');
