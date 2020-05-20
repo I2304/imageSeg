@@ -1,83 +1,72 @@
 
 clear all; close all; clc; 
 
-%% Load an image. 
+%% Main execution block 
 
-og = imread('./us_two_inc/density.png');
-img = mat2gray(og);
-img(:, :) = 1;
-img(200:300, 200:300) = .05; 
-img(500:600, 500:600) = .05;
+% Example segmentations. First, use contrastImage_template.m to properly
+% adjust the contrast of any image you need to segment (in order to 
+% avoid singularity errors).
 
-% For simplicity, it is assumed that the image is approximately square, 
-% and we just truncate the longer end. 
-img = img(1:min(size(img, 1), size(img, 2)), ...
-    1:min(size(img, 1), size(img, 2))); 
+% l = segment_image('./us_two_inc/density_contrasted.png', 3/2, 1, 1/2, 2, 3);
+l = segment_image('./us_usnccm/density_contrasted.png', 3/2, 1, 1/2, 2, 3);
 
-figure(1)
-imshow(img)
-title ('Original Image', 'Interpreter', 'Latex', 'Fontsize', 14)
+%% Image segmentation function 
+% Takes in: 
+%  path: the (relative) path to an image 
+%  P: the value of p to be used in the normalization
+%  Q: the value of q to be used in the normalization
+%  R: the value of r to be used in the normalization 
+%  minI: minimum eigenfunction (e.g., 2) to be plotted
+%  maxI: maximum eigenfunction (e.g., 5) to be plotted
+% Plots the specified range of eigenfunctions v_{minI}, ..., v_{maxI} to 
+% be plotted, and returns l (the list of eigenvalues identified). 
+function l = segment_image(path, P, Q, R, minI, maxI)
+    global M   
+    global rho_matrix
+    global q 
+    global pr 
 
-%% Define (p, q, r)
+    % LOAD & PRE-PROCESS IMAGE --------------------------------------------
+    img = imread(path);
+    img = cast(img, 'double')/255+.01;
+    figure()
+    imshow(img)
+    title ('Original Image', 'Interpreter', 'Latex', 'Fontsize', 14)
 
-global M
-M = length(img);
-global rho_matrix
-rho_matrix = img;
-global q
-q = 2; 
-global pr
-pr = 2; 
-r = 1/2; 
+    % SET GLOBAL VARIABLES ------------------------------------------------
+    rho_matrix = img;
+    M = length(img); 
+    q = Q; 
+    pr = P + R;
 
-%% Create square domain 
+    % SPECIFY A SMALLE TOLERANCE EPSILON ----------------------------------
+    epsilon = 10^(-3);  
 
-lowerLeft  = [0 , 0 ];
-lowerRight = [1 , 0 ];
-upperRight = [1 , 1];
-upperLeft =  [0 , 1];
-S = [3,4 lowerLeft(1), lowerRight(1), upperRight(1), upperLeft(1), ...
-         lowerLeft(2), lowerRight(2), upperRight(2), upperLeft(2)];                     
-gdm = S';
-% Names
-ns = 'S';
-% Set formula 
-sf = 'S';
-% Invoke decsg
-g = decsg(gdm,ns,sf');
-% Import g into model using geometryFromEdges.
-model = createpde;
-geometryFromEdges(model,g);
-% Plot the domain
-figure(2)
-pdegplot(model,'EdgeLabel','on');
-xlim([0,1.5])
-ylim([0,1.5])
-title('Plot of domain $\Omega$', 'Interpreter', 'Latex', 'Fontsize', 14)
 
-%% Set up eigenvalue problem 
+    % CREAT EVP MODEL -----------------------------------------------------
+    model = construct_laplacian_model();
+    % Plot the domain
+    figure()
+    plot_domain(model)
+    % Calculate eigenvalues
+    results = solve_evp(model,[-epsilon, 10],epsilon);
+    l = results.Eigenvalues;
 
-applyBoundaryCondition(model,'neumann','Edge',1:4,'g',0,'q',0);
-specifyCoefficients(model,'m',0,'d',@dcoeffunction,...
-    'c',@ccoeffunction,'a',0,'f',0);
-range = [0,40];
-generateMesh(model,'Hmax',0.05)
-results = solvepdeeig(model,range);
-l = results.Eigenvalues; % stores eigenvalues 
+    % PLOTS ---------------------------------------------------------------
+    for i = minI:maxI
+        % Plot v_i
+        figure()
+        plot_v(i, results, model)
+        % Plot u_i
+        figure()
+        plot_u(i, results, R)
+    end
 
-%% Plots
+end
 
-% Plot second eigenvector v
-figure()
-plotv(2, results, model)
-% Plot second eigenvector u
-figure()
-plotu(2, results, r)
-
-%% Plot helper functions
-
+%% Plotting helper functions
 % Plots eigenfunction v_i
-function plotv(i, results, model)
+function plot_v(i, results, model)
     v = results.Eigenvectors;
     pdeplot(model,'XYData',v(:,i));
     s = strcat('$v_', num2str(i), '(x_1, x_2)$');
@@ -87,9 +76,8 @@ function plotv(i, results, model)
     ylabel('$x_2$', 'Interpreter', 'Latex', ...
         'Interpreter', 'Latex', 'Fontsize', 14)
 end
-
 % Plots eigenfunction u_i
-function plotu(i, results, r)
+function plot_u(i, results, r)
     u = getu(i, results, r); 
     imagesc(u)
     colorbar
@@ -101,7 +89,13 @@ function plotu(i, results, r)
     ylabel('pixel horizontal coordinate', 'Interpreter', 'Latex', ...
         'Fontsize', 14)
 end
-
+% Plots model domain. 
+function plot_domain(model)
+    pdegplot(model,'EdgeLabel','on');
+    xlim([-0.5,1.5])
+    ylim([-0.5,1.5])
+    title('Plot of domain $\Omega$', 'Interpreter', 'Latex', 'Fontsize', 14)
+end
 % Takes in the results of the eigenvalue solver and returns corresponding 
 % eigenfunction u_i.
 function u = getu(i, results, r)
@@ -109,13 +103,57 @@ function u = getu(i, results, r)
     global rho_matrix
     [xq,yq] = meshgrid(linspace(0, 1, M));
     v = interpolateSolution(results,xq,yq,i);
-    u = reshape(v,size(xq))./(rho_matrix.^(r));
+    u = reshape(v,size(xq))./((rho_matrix).^(r));
 end
 
-%% PDE Coefficients 
+%% Eigensolver helper functions.
+% Solves eigenvalue problem and runs error checking.
+function results = solve_evp(model, range, epsilon)
+    results = solvepdeeig(model,range);
+    l = results.Eigenvalues; % stores eigenvalues
+    if abs(l(1)) > epsilon
+        disp('Uh oh, the first eigenvalue is nonzero. Check range.')
+    end
+end
+% Computes a pde model for the L operator with zero neumann BC's, 
+% specified square geometry, and custom tolerance and mesh size.
+function model = construct_laplacian_model()
+    g = get_square_geometry();
+    model = createpde();
+    % Geometry specification 
+    geometryFromEdges(model,g);
+    % Solver specificiation 
+    model.SolverOptions.AbsoluteTolerance = 5.0000e-09;
+    model.SolverOptions.RelativeTolerance = 5.0000e-06;
+    model.SolverOptions.ReportStatistics = 'on';
+    % Homogeneous Neumann BCs
+    applyBoundaryCondition(model,'neumann','Edge',1:4,'g',0,'q',0);
+    % Coefficient specification
+    specifyCoefficients(model,'m',0,'d',@dcoeffunction,...
+        'c',@ccoeffunction,'a',0,'f',0);
+    % Mesh size
+    generateMesh(model,'Hmax',0.01)
+end
+% Computes a [0, 1] x [0, 1] square geometry. 
+function g = get_square_geometry()
+    lowerLeft  = [0 , 0 ];
+    lowerRight = [1 , 0 ];
+    upperRight = [1 , 1];
+    upperLeft =  [0 , 1];
+    S = [3,4 lowerLeft(1), lowerRight(1), upperRight(1), upperLeft(1), ...
+             lowerLeft(2), lowerRight(2), upperRight(2), upperLeft(2)];                     
+    gdm = S';
+    % Names
+    ns = 'S';
+    % Set formula 
+    sf = 'S';
+    % Invoke decsg
+    g = decsg(gdm,ns,sf');
+end
 
+%% Coefficient specification functions (must follow a very specific format)
 % This function encodes the coefficient d, which in our formulation is
-% \rho^(p+r). T
+% \rho^(p+r).
 function dmatrix = dcoeffunction(location,state)
     % Use global definition of rho_matrix
     global rho_matrix
@@ -145,7 +183,8 @@ function dmatrix = dcoeffunction(location,state)
         dmatrix(index) = (rho_matrix(i,j))^(pr);
     end
 end
-
+% This function encodes the coefficient c, which in our formulation is
+% \rho^(q).
 function cmatrix = ccoeffunction(location,state)
     % Use global definition of rho_matrix
     global rho_matrix
