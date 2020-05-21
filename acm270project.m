@@ -5,8 +5,8 @@ clear all; close all; clc;
 
 % Example segmentations
 
-% l = get_eigfunc('./us_two_inc/density_contrasted.png', 3/2, 5, 1/2, 2, 3);
-[l, uData, vData] = get_eigfunc('./us_usnccm/density_contrasted.png', 3/2, 2, 1/2, 6);
+% l = get_eigfunc('./us_two_inc/density_contrasted.png', 3/2, 2, 1/2, 2, 3);
+[l, uData, vData] = get_eigfunc('./us_usnccm/density_contrasted.png', 3/2, 2, 1/2, 3);
 
 %% Eigenfunction solver
 % Takes in: 
@@ -27,6 +27,11 @@ function [l, uData, vData] = get_eigfunc(path, P, Q, R, K)
     % LOAD & PRE-PROCESS IMAGE --------------------------------------------
     img = imread(path);
     img = cast(img, 'double')/255+.01;
+    img(:, :) = .01; 
+    img(100:400, 100:400) = 1;
+    img(200:300, 200:300) = .01;
+    img(225:275, 225:275) = 1;
+    img(500:600, 500:600) = 1; 
     figure()
     imshow(img)
     title ('Original Image', 'Interpreter', 'Latex', 'Fontsize', 14)
@@ -62,16 +67,17 @@ end
 function [uData, vData] = get_embedding(results, K, r)
     global M
     global rho_matrix
-    vData = zeros(M, M, K-1);
-    uData = zeros(M, M, K-1);
-    for k = 2:K
+    vData = zeros(M, M, K);
+    uData = zeros(M, M, K);
+    for k = 1:K
         [xq,yq] = meshgrid(linspace(0,1,M));
         v = interpolateSolution(results,xq,yq,k);
         vData(:, :, k) = reshape(v,size(xq));
-        u = reshape(v,size(xq))./((rho_matrix).^(r));
+        u = reshape(v,size(xq)).*((rho_matrix).^(1/2));
         uData(:, :, k) = u; 
     end
 end
+
 %% Plotting helper functions
 % Plots eigenfunction v_i
 function plot_v(i, results, model)
@@ -111,7 +117,7 @@ function u = getu(i, results, r)
     global rho_matrix
     [xq,yq] = meshgrid(linspace(0, 1, M));
     v = interpolateSolution(results,xq,yq,i);
-    u = reshape(v,size(xq))./((rho_matrix).^(r));
+    u = flip(reshape(v,size(xq)), 1).*((rho_matrix).^(r));
 end
 
 %% Eigensolver helper functions.
