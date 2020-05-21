@@ -3,14 +3,12 @@ clear all; close all; clc;
 
 %% Main execution block 
 
-% Example segmentations. First, use contrastImage_template.m to properly
-% adjust the contrast of any image you need to segment (in order to 
-% avoid singularity errors).
+% Example segmentations
 
-% l = segment_image('./us_two_inc/density_contrasted.png', 3/2, 1, 1/2, 2, 3);
-l = segment_image('./us_usnccm/density_contrasted.png', 3/2, 1, 1/2, 2, 3);
+% l = get_eigfunc('./us_two_inc/density_contrasted.png', 3/2, 5, 1/2, 2, 3);
+[l, uData, vData] = get_eigfunc('./us_usnccm/density_contrasted.png', 3/2, 2, 1/2, 6);
 
-%% Image segmentation function 
+%% Eigenfunction solver
 % Takes in: 
 %  path: the (relative) path to an image 
 %  P: the value of p to be used in the normalization
@@ -19,13 +17,13 @@ l = segment_image('./us_usnccm/density_contrasted.png', 3/2, 1, 1/2, 2, 3);
 %  minI: minimum eigenfunction (e.g., 2) to be plotted
 %  maxI: maximum eigenfunction (e.g., 5) to be plotted
 % Plots the specified range of eigenfunctions v_{minI}, ..., v_{maxI} to 
-% be plotted, and returns l (the list of eigenvalues identified). 
-function l = segment_image(path, P, Q, R, minI, maxI)
+% be plotted, and returns l (the list of eigenvalues identified). It also
+% returns embeddings in terms of u and v. 
+function [l, uData, vData] = get_eigfunc(path, P, Q, R, K)
     global M   
     global rho_matrix
     global q 
     global pr 
-
     % LOAD & PRE-PROCESS IMAGE --------------------------------------------
     img = imread(path);
     img = cast(img, 'double')/255+.01;
@@ -38,10 +36,8 @@ function l = segment_image(path, P, Q, R, minI, maxI)
     M = length(img); 
     q = Q; 
     pr = P + R;
-
     % SPECIFY A SMALLE TOLERANCE EPSILON ----------------------------------
     epsilon = 10^(-3);  
-
 
     % CREAT EVP MODEL -----------------------------------------------------
     model = construct_laplacian_model();
@@ -49,11 +45,10 @@ function l = segment_image(path, P, Q, R, minI, maxI)
     figure()
     plot_domain(model)
     % Calculate eigenvalues
-    results = solve_evp(model,[-epsilon, 10],epsilon);
+    results = solve_evp(model,[-epsilon, 40],epsilon);
     l = results.Eigenvalues;
-
     % PLOTS ---------------------------------------------------------------
-    for i = minI:maxI
+    for i = 2:K
         % Plot v_i
         figure()
         plot_v(i, results, model)
@@ -61,9 +56,22 @@ function l = segment_image(path, P, Q, R, minI, maxI)
         figure()
         plot_u(i, results, R)
     end
-
+    [uData, vData] = get_embedding(results, K, R);
 end
 
+function [uData, vData] = get_embedding(results, K, r)
+    global M
+    global rho_matrix
+    vData = zeros(M, M, K-1);
+    uData = zeros(M, M, K-1);
+    for k = 2:K
+        [xq,yq] = meshgrid(linspace(0,1,M));
+        v = interpolateSolution(results,xq,yq,k);
+        vData(:, :, k) = reshape(v,size(xq));
+        u = reshape(v,size(xq))./((rho_matrix).^(r));
+        uData(:, :, k) = u; 
+    end
+end
 %% Plotting helper functions
 % Plots eigenfunction v_i
 function plot_v(i, results, model)
