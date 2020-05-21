@@ -9,6 +9,10 @@ clear all; close all; clc;
 [l, uData, vData] = get_segmentation('./us_usnccm/slide1.png', ...
     3/2, 2, 1/2, 6, 40, 7, 8, true);
 
+figure(10)
+U = reshape(vData, [length(uData)^2, 6]);
+imagesc(reshape(kmeans(U, 9), [length(uData), length(vData)]))
+
 %% Eigenfunction solver
 % Takes in: 
 %  path: the (relative) path to an image 
