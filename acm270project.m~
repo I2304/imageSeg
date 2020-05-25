@@ -9,27 +9,15 @@ clear all; close all; clc;
 % Q, R). These parameters can be tuned 
 
 % Two dots test case
-[l, uData, vData] = get_segmentation('./test_cases/density_2_dots/original.png', ...
-    3/2, 2, 1/2, 2, 70, 3, 3, true);
+[l, uData, vData] = get_segmentation('./test_cases/usnccm_7_letters/usnccm_7_letters.png', ...
+    3/2, 2, 1/2, 6, 70, 7, 7, true);
 
 % USNCCM 
-% [l, uData, vData] = get_segmentation('./test_cases/usnccm_7_letters/original.png', ...
+% [l, uData, vData] = get_segmentation('./test_cases/usnccm_7_letters.png', ...
 %     3/2, 2, 1/2, 6, 70, 7, 7, true);
 
 
-%% Segmentation Algorithm
-% Takes in: 
-%  path: the (relative) path to an image 
-%  P: the value of p to be used in the normalization
-%  Q: the value of q to be used in the normalization
-%  R: the value of r to be used in the normalization 
-%  K: the number of eigenfunctions (e.g., 6) to be plotted
-%  maxL: the maximum magnitude eigenvalue (e.g., 40) to be solved for
-%  num_clusters_u: number of clusters when segmenting on u
-%  num_clusters_v: number of clusters when segmenting on v
-%  swap: if the segmentation is bad, consider switching swap to true 
-%        to swap the contrast of the image as this may improve the 
-%        calculation of the eigenfunctions
+%% Eigenfunction solver
 % Plots the specified range of eigenfunctions v_{minI}, ..., v_{maxI} to 
 % be plotted, and returns l (the list of eigenvalues identified). It also
 % returns embeddings in terms of u and v. 
