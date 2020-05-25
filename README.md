@@ -21,4 +21,4 @@ Several examples of the algorithm output, for different values of P, Q, and R ar
 
 For example: 
 - segmentation_3/2_2_1/2 
-corresponds to segmentation using the normalized continuum Laplacian operator. 
+corresponds to segmentation using the normalized continuum Laplacian operator
