@@ -1,4 +1,3 @@
-
 clear all; close all; clc; 
 
 %% Main execution block 
@@ -6,18 +5,8 @@ clear all; close all; clc;
 % Example segmentations
 
 % l = get_eigfunc('./us_two_inc/density_contrasted.png', 3/2, 2, 1/2, 2);
-% [l, uData, vData] = get_segmentation('./us_usnccm/slide1.png', ...
-%     3/2, 2, 1/2, 6, 40, 7, 8, true);
-[l, uData, vData] = get_eigenfunctions('./ishani.png', ...
-    3/2, 2, 1/2, 12, 70, false);
-
-figure(5)
-subplot(1, 2, 1)
-get_seg(uData, 12, 20, ...
-    'Segmentation obtained using eigenfunctions $\{u_i\}$')
-subplot(1, 2, 2)
-get_seg(vData, 12, 20, ...
-    'Segmentation obtained using eigenfunctions $\{v_i\}$')
+[l, uData, vData] = get_segmentation('./us_usnccm/slide1.png', ...
+    3/2, 2, 1/2, 2, 70, 2, 2, true);
 
 %% Eigenfunction solver
 % Takes in: 
@@ -27,13 +16,16 @@ get_seg(vData, 12, 20, ...
 %  R: the value of r to be used in the normalization 
 %  K: the number of eigenfunctions (e.g., 6) to be plotted
 %  maxL: the maximum magnitude eigenvalue (e.g., 40) to be solved for
+%  num_clusters_u: number of clusters when segmenting on u
+%  num_clusters_v: number of clusters when segmenting on v
 %  swap: if the segmentation is bad, consider switching swap to true 
 %        to swap the contrast of the image as this may improve the 
 %        calculation of the eigenfunctions
 % Plots the specified range of eigenfunctions v_{minI}, ..., v_{maxI} to 
 % be plotted, and returns l (the list of eigenvalues identified). It also
 % returns embeddings in terms of u and v. 
-function [l, uData, vData] = get_eigenfunctions(path, P, Q, R, K, maxL, swap)
+function [l, uData, vData] = get_segmentation(path, P, Q, R, K, maxL, ...
+    num_clusters_u, num_clusters_v, swap)
     global M   
     global rho_matrix
     global q 
@@ -64,7 +56,7 @@ function [l, uData, vData] = get_eigenfunctions(path, P, Q, R, K, maxL, swap)
     plot_domain(model)
     % Calculate eigenvalues
     results = solve_evp(model,[-epsilon, maxL],epsilon);
-    l = results.Eigenvalues;
+    l = results.Eigenvalues
     % EIGENFUNCTION PLOTS -------------------------------------------------
     [a, ~] = numSubplots(K);
     for i = 1:K
@@ -81,9 +73,17 @@ function [l, uData, vData] = get_eigenfunctions(path, P, Q, R, K, maxL, swap)
     figure(4); sgtitle('Transformed eigenvectors $u$', 'Interpreter', 'Latex');
     % RETRIEVE EMBEDDING --------------------------------------------------
     [uData, vData] = get_embedding(results, K, R);
+    % RUN KMEANS ON EMBEDDING ---------------------------------------------
+    figure(5)
+    subplot(1, 2, 1)
+    cluster(uData, K, num_clusters_u, ...
+        'Segmentation obtained using eigenfunctions $\{u_i\}$')
+    subplot(1, 2, 2)
+    cluster(vData, K, num_clusters_v, ...
+        'Segmentation obtained using eigenfunctions $\{v_i\}$')
 end
 % Plots the final segmentation using kmeans on the embedding
-function get_seg(data, K, num_clusters, s)
+function [classU, classV] = cluster(data, K, num_clusters, s)
     X = reshape(data, [(length(data))^2, K]);
     clusters = reshape(kmeans(X, num_clusters), ...
         [(length(data)), (length(data))]); 
