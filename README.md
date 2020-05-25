@@ -18,6 +18,7 @@ You may uncomment the examples at the top of acm270project.m to run the algorith
 
 Several examples of the algorithm output, for different values of P, Q, and R are available in the test_cases folder. The test_cases folder has several subfolders, each of which corresponds to a certain test image. In each of these image subfolders, one can find the original image and example segmentations. For the example segmentations, the naming convention is as follows: 
 - segmentation_P_Q_R
-so that (for exmample)
+
+For example: 
 - segmentation_3/2_2_1/2 
 corresponds to segmentation using the normalized continuum Laplacian operator. 
