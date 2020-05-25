@@ -3,10 +3,15 @@ clear all; close all; clc;
 %% Main execution block 
 
 % Example segmentations
+% WORKS BEST WITH num_clusters = K+1 
 
-% l = get_eigfunc('./us_two_inc/density_contrasted.png', 3/2, 2, 1/2, 2);
-[l, uData, vData] = get_segmentation('./us_usnccm/slide1.png', ...
-    3/2, 2, 1/2, 2, 70, 2, 2, true);
+% Two dots
+[l, uData, vData] = get_segmentation('./test_cases/usnccm_7_letters.png', ...
+    3/2, 2, 1/2, 6, 70, 7, 7, true);
+% USNCCM 
+% [l, uData, vData] = get_segmentation('./test_cases/usnccm_7_letters.png', ...
+%     3/2, 2, 1/2, 6, 70, 7, 7, true);
+
 
 %% Eigenfunction solver
 % Takes in: 
@@ -56,7 +61,7 @@ function [l, uData, vData] = get_segmentation(path, P, Q, R, K, maxL, ...
     plot_domain(model)
     % Calculate eigenvalues
     results = solve_evp(model,[-epsilon, maxL],epsilon);
-    l = results.Eigenvalues
+    l = results.Eigenvalues;
     % EIGENFUNCTION PLOTS -------------------------------------------------
     [a, ~] = numSubplots(K);
     for i = 1:K
@@ -88,7 +93,14 @@ function [classU, classV] = cluster(data, K, num_clusters, s)
     clusters = reshape(kmeans(X, num_clusters), ...
         [(length(data)), (length(data))]); 
     imagesc(clusters)
-    title(s, 'Interpreter', 'Latex')
+    title(s, 'Interpreter', 'Latex', 'Fontsize', 14)
+    c = colorbar;
+    colorTitleHandle = get(c,'Title');
+    titleString = 'Cluster Index';
+    set(colorTitleHandle ,'String',titleString, 'Interpreter', 'Latex', ...
+        'Fontsize', 14);
+    xlabel('pixel $i$', 'Interpreter', 'Latex', 'Fontsize', 14)
+    ylabel('pixel $j$', 'Interpreter', 'Latex', 'Fontsize', 14)
 end
 % Computes the embedding of the image from the eigenfunctions
 function [uData, vData] = get_embedding(results, K, r)
@@ -163,8 +175,8 @@ function model = construct_laplacian_model()
     % Geometry specification 
     geometryFromEdges(model,g);
     % Solver specificiation 
-    model.SolverOptions.AbsoluteTolerance = 5.0000e-09;
-    model.SolverOptions.RelativeTolerance = 5.0000e-06;
+    model.SolverOptions.AbsoluteTolerance = 5.0000e-010;
+    model.SolverOptions.RelativeTolerance = 5.0000e-010;
     model.SolverOptions.ReportStatistics = 'on';
     % Homogeneous Neumann BCs
     applyBoundaryCondition(model,'neumann','Edge',1:4,'g',0,'q',0);
