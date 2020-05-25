@@ -14,4 +14,10 @@ The function get_segmentation() in the file acm270project.m takes in:
 
 The function displays the two segmentations of the image. The first segmentation is done using the Laplacian embedding (based on the eigenfunctions u). The second segmentation is done using the embedding in terms of the transformed eigenfunctions v. In these segmentations, each pixel is labelled with a certain index from 1 to num_clusters_u (or num_clusters_v for the second segmentation). The label idicates the cluster/artifact assignmen of that pixel within the image. 
 
-Several test cases are available in the test_cases folder. 
+You may uncomment the examples at the top of acm270project.m to run the algorithm on a few test cases. 
+
+Several examples of the algorithm output, for different values of P, Q, and R are available in the test_cases folder. The test_cases folder has several subfolders, each of which corresponds to a certain test image. In each of these image subfolders, one can find the original image and example segmentations. For the example segmentations, the naming convention is as follows: 
+- segmentation_P_Q_R
+so that (for exmample)
+- segmentation_3/2_2_1/2 
+corresponds to segmentation using the normalized continuum Laplacian operator. 
