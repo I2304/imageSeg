@@ -8,21 +8,31 @@ clear all; close all; clc;
 % All test cases here are for the normalized laplacian (3/2, 2, 1/2) = (P,
 % Q, R). These parameters can be tuned 
 
-% Two dots test case
 % [l, uData, vData] = get_segmentation('./test_cases/density_2_dots/original.png', ...
 %     3/2, 2, 1/2, 2, 70, 3, 3, true);
 
-% Twelve dots test case
-[l, uData, vData] = get_segmentation('./test_cases/cars/original.jpg', ...
-    3/2, 2, 1/2, 6, 90, 7, 7, true);
+% [l, uData, vData] = get_segmentation('./test_cases/brain/original.png', ...
+%     3/2, 2, 1/2, 9, 70, 10, 10, false);
 
-% % Twelve dots test case
 % [l, uData, vData] = get_segmentation('./test_cases/pattern_12_dots/original.png', ...
 %     3/2, 2, 1/2, 11, 80, 12, 12, true);
 
-% USNCCM 
 % [l, uData, vData] = get_segmentation('./test_cases/usnccm_7_letters/original.png', ...
 %     3/2, 2, 1/2, 6, 70, 7, 7, true);
+
+% [l, uData, vData] = get_segmentation('./test_cases/flower/original.jpg', ...
+%     3/2, 1, 1/2, 4, 80, 5, 5, false);
+
+
+q = 2; r = 1;
+p_lst = [0 0.5 1 1.5 2 2.5 10 20];
+[l, uData, vData] = get_segmentation('./test_cases/complicatedflower/original.png', ...
+p_lst, q, r, 8, 40, 10, 10, false);
+
+p = 0.5; r = 0.5;
+q_lst = [0 0.5 1 1.5 2 2.5 10 20];
+[l, uData, vData] = get_segmentation('./test_cases/complicatedflower/original.png', ...
+p, q_lst, r, 8, 40, 10, 10, false);
 
 
 %% Segmentation Algorithm
@@ -41,8 +51,11 @@ clear all; close all; clc;
 % Plots the specified range of eigenfunctions v_{minI}, ..., v_{maxI} to 
 % be plotted, and returns l (the list of eigenvalues identified). It also
 % returns embeddings in terms of u and v. 
-function [l, uData, vData] = get_segmentation(path, P, Q, R, K, maxL, ...
+function [l, uData, vData] = get_segmentation(path, P_lst, Q_lst, R_lst, K, maxL, ...
     num_clusters_u, num_clusters_v, swap)
+    dest = ['./results/' datetime('now')];
+    mkdir(dest);
+    num = 1;
     global M   
     global rho_matrix
     global q 
@@ -61,43 +74,67 @@ function [l, uData, vData] = get_segmentation(path, P, Q, R, K, maxL, ...
     figure(1)
     imshow(img)
     title ('Original Image', 'Interpreter', 'Latex', 'Fontsize', 14)
+    temp=[dest,filesep,num2str(num),'.png'];
+    saveas(gca,temp);
+    num = num + 1;
     % SET GLOBAL VARIABLES ------------------------------------------------
     rho_matrix = img;
     M = length(img); 
-    q = Q; 
-    pr = P + R;
-    % CREAT EVP MODEL -----------------------------------------------------
-    model = construct_laplacian_model();
-    % Plot the domain
-    figure(2)
-    plot_domain(model)
-    % Calculate eigenvalues
-    results = solve_evp(model,[-epsilon, maxL],epsilon);
-    l = results.Eigenvalues;
-    % EIGENFUNCTION PLOTS -------------------------------------------------
-    [a, ~] = numSubplots(K);
-    for i = 1:K
-        % Plot v_i
-        figure(3)
-        subplot(a(1), a(2), i)
-        plot_v(i, results, model)
-        % Plot u_i
-        figure(4)
-        subplot(a(1), a(2), i)
-        plot_u(i, results, R)
+    for P = P_lst
+        for Q = Q_lst
+            for R = R_lst
+                q = Q; 
+                pr = P + R;
+                % CREAT EVP MODEL -----------------------------------------------------
+                model = construct_laplacian_model();
+                % Plot the domain
+                figure(2)
+                plot_domain(model)
+                temp=[dest,filesep,num2str(num),'.png'];
+                saveas(gca,temp);
+                num = num + 1;
+                % Calculate eigenvalues
+                results = solve_evp(model,[-epsilon, maxL],epsilon);
+                l = results.Eigenvalues;
+                % EIGENFUNCTION PLOTS -------------------------------------------------
+                [a, ~] = numSubplots(K);
+                figure(3)
+                for i = 1:K
+                    % Plot v_i
+                    subplot(a(1), a(2), i)
+                    plot_v(i, results, model)
+                end
+    temp=[dest,filesep,num2str(num),'.png'];
+                saveas(gca,temp);
+                num = num + 1;
+                
+                figure(4)
+                for i = 1:K
+                    % Plot u_i
+                    subplot(a(1), a(2), i)
+                    plot_u(i, results, R)
+                end
+                temp=['./results',num2str(num),'.png'];
+                saveas(gca,temp);
+                num = num + 1;
+                %figure(3); %sgtitle('Transformed eigenvectors $v$', 'Interpreter', 'Latex');
+                %figure(4); %sgtitle('Transformed eigenvectors $u$', 'Interpreter', 'Latex');
+                % RETRIEVE EMBEDDING --------------------------------------------------
+                [uData, vData] = get_embedding(results, K, R);
+                % RUN KMEANS ON EMBEDDING ---------------------------------------------
+                figure(5)
+                subplot(1, 2, 1)
+                cluster(uData, K, num_clusters_u, ...
+                    ['Segmentation using $\{u_i\}$ : p = ' num2str(P) ' , q = ' num2str(Q) ' , r = ' num2str(R)])
+                subplot(1, 2, 2)
+                cluster(vData, K, num_clusters_v, ...
+                    ['Segmentation using $\{v_i\}$ : p = ' num2str(P) ' , q = ' num2str(Q) ' , r = ' num2str(R)])
+                temp=['./results',num2str(num),'.png'];
+                saveas(gca,temp);
+                num = num + 1;
+            end
+        end
     end
-    figure(3); sgtitle('Transformed eigenvectors $v$', 'Interpreter', 'Latex');
-    figure(4); sgtitle('Transformed eigenvectors $u$', 'Interpreter', 'Latex');
-    % RETRIEVE EMBEDDING --------------------------------------------------
-    [uData, vData] = get_embedding(results, K, R);
-    % RUN KMEANS ON EMBEDDING ---------------------------------------------
-    figure(5)
-    subplot(1, 2, 1)
-    cluster(uData, K, num_clusters_u, ...
-        'Segmentation obtained using eigenfunctions $\{u_i\}$')
-    subplot(1, 2, 2)
-    cluster(vData, K, num_clusters_v, ...
-        'Segmentation obtained using eigenfunctions $\{v_i\}$')
 end
 % Plots the final segmentation using kmeans on the embedding
 function [classU, classV] = cluster(data, K, num_clusters, s)
