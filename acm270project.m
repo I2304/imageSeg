@@ -26,13 +26,13 @@ clear all; close all; clc;
 
 q = 2; r = 1;
 p_lst = [0 0.5 1 1.5 2 2.5 10 20];
-[l, uData, vData] = get_segmentation('./test_cases/complicatedflower/original.png', ...
+[l, uData, vData] = get_segmentation('./test_cases/flower/original.jpg', ...
 p_lst, q, r, 8, 40, 10, 10, false);
 
-p = 0.5; r = 0.5;
-q_lst = [0 0.5 1 1.5 2 2.5 10 20];
-[l, uData, vData] = get_segmentation('./test_cases/complicatedflower/original.png', ...
-p, q_lst, r, 8, 40, 10, 10, false);
+% p = 0.5; r = 0.5;
+% q_lst = [0 0.5 1 1.5 2 2.5 10 20];
+% [l, uData, vData] = get_segmentation('./test_cases/complicatedflower/original.png', ...
+% p, q_lst, r, 8, 40, 10, 10, false);
 
 
 %% Segmentations Algorithm
@@ -74,7 +74,7 @@ function [l, uData, vData] = get_segmentation(path, P_lst, Q_lst, R_lst, K, maxL
     figure(1)
     imshow(img)
     title ('Original Image', 'Interpreter', 'Latex', 'Fontsize', 14)
-    temp=[dest,filesep,num2str(num),'.png'];
+    temp=[dest,filesep,'Original image ', num2str(num),'.png'];
     saveas(gca,temp);
     num = num + 1;
     % SET GLOBAL VARIABLES ------------------------------------------------
@@ -90,7 +90,7 @@ function [l, uData, vData] = get_segmentation(path, P_lst, Q_lst, R_lst, K, maxL
                 % Plot the domain
                 figure(2)
                 plot_domain(model)
-                temp=[dest,filesep,num2str(num),'.png'];
+                temp=[dest,filesep,'Domain: ', num2str(P),'_',num2str(Q),'_',num2str(R),'.png'];
                 saveas(gca,temp);
                 num = num + 1;
                 % Calculate eigenvalues
@@ -104,7 +104,7 @@ function [l, uData, vData] = get_segmentation(path, P_lst, Q_lst, R_lst, K, maxL
                     subplot(a(1), a(2), i)
                     plot_v(i, results, model)
                 end
-                temp=[dest,filesep,num2str(num),'.png'];
+                temp=[dest,filesep,'Eigenvector v: ',num2str(P),'_',num2str(Q),'_',num2str(R),'.png'];
                 saveas(gca,temp);
                 num = num + 1;
                 
@@ -114,7 +114,7 @@ function [l, uData, vData] = get_segmentation(path, P_lst, Q_lst, R_lst, K, maxL
                     subplot(a(1), a(2), i)
                     plot_u(i, results, R)
                 end
-                temp=[dest,filesep,num2str(num),'.png'];    
+                temp=[dest,filesep,'Eigenvector u: ', num2str(P),'_',num2str(Q),'_',num2str(R),'.png'];    
                 saveas(gca,temp);
                 num = num + 1;
                 %figure(3); %sgtitle('Transformed eigenvectors $v$', 'Interpreter', 'Latex');
@@ -125,13 +125,13 @@ function [l, uData, vData] = get_segmentation(path, P_lst, Q_lst, R_lst, K, maxL
                 figure(5)
                 cluster(uData, K, num_clusters_u, ...
                     ['Segmentation using $\{u_i\}$ : p = ' num2str(P) ' , q = ' num2str(Q) ' , r = ' num2str(R)])
-                temp=[dest,filesep,num2str(num),'.png'];
+                temp=[dest,filesep,'Segmentation using u: ', num2str(P),'_',num2str(Q),'_',num2str(R),'.png'];
                 saveas(gca,temp);
                 num = num + 1;
                 figure(6)
                 cluster(vData, K, num_clusters_v, ...
                     ['Segmentation using $\{v_i\}$ : p = ' num2str(P) ' , q = ' num2str(Q) ' , r = ' num2str(R)])
-                temp=[dest,filesep,num2str(num),'.png'];
+                temp=[dest,filesep,'Segmentation using v: ', num2str(P),'_',num2str(Q),'_',num2str(R),'.png'];
                 saveas(gca,temp);
                 num = num + 1;
             end
