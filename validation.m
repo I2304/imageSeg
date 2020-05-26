@@ -40,17 +40,10 @@ rho_2_dense(200:225, 275:300) = 1;
 rho_2_truth(200:225, 275:300) = 7; 
 rho_2_dense(800:900, 100:200) = 1; 
 rho_2_truth(800:900, 100:200) = 8; 
-N = 10; 
 
-% %% Main execution block 
-accuracies = 1:N; 
-for reps=1:N
-    [l, clustersu, clustersv] = get_segmentation(rho_2_dense, 3/2, 3/2, 1/2, ...
-        7, 70, 8, 8);
-    accuracies(reps) = compute_quality(clustersu, 8, rho_2_truth);
-end
-mean(accuracies)
-
+[l, uData, vData] = get_segmentation(rho_2_dense, 3/2, 2, 1/2, ...
+        7, 50, 8, 8);
+    
 function quality = compute_quality(clusters, num_clusters, truth)
     % compute all permutations
     permutations = perms(1:num_clusters);
@@ -121,9 +114,11 @@ function [l, clustersu, clustersv] = get_segmentation(img, P, Q, R, K, maxL, ...
         subplot(a(1), a(2), i)
         plot_u(i, results, R)
     end
-    figure(3); sgtitle('Transformed eigenvectors $v$', 'Interpreter', 'Latex');
-    figure(4); sgtitle('Transformed eigenvectors $u$', 'Interpreter', 'Latex');
-    % RETRIEVE EMBEDDING --------------------------------------------------
+    figure(3); sgtitle('Transformed eigenvectors $v$', ...
+        'Interpreter', 'Latex');
+    figure(4); sgtitle('Transformed eigenvectors $u$', ...
+        'Interpreter', 'Latex');
+%     % RETRIEVE EMBEDDING --------------------------------------------------
     [uData, vData] = get_embedding(results, K, R);
     % RUN KMEANS ON EMBEDDING ---------------------------------------------
     figure(5)
@@ -137,7 +132,7 @@ end
 % Plots the final segmentation using kmeans on the embedding
 function clusters = cluster(data, K, num_clusters, s)
     X = reshape(data, [(length(data))^2, K]);
-    clusters = reshape(kmeans(X, num_clusters), ...
+    clusters = reshape(kmeans(X, num_clusters, 'Replicates',5), ...
         [(length(data)), (length(data))]); 
     imagesc(clusters)
     title(s, 'Interpreter', 'Latex', 'Fontsize', 14)

@@ -23,9 +23,6 @@ clear all; close all; clc;
 % [l, uData, vData] = get_segmentation('./test_cases/flower/original.jpg', ...
 %     3/2, 1, 1/2, 4, 80, 5, 5, false);
 
-[l, uData, vData] = get_segmentation('./test_cases/custom/test3.png', ...
-    3/2, 5/2, 1/2, 8, 40, 8, 8, false);
-
 %% Segmentation Algorithm
 % Takes in: 
 %  path: the (relative) path to an image 
