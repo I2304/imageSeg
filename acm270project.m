@@ -23,10 +23,19 @@ clear all; close all; clc;
 % [l, uData, vData] = get_segmentation('./test_cases/flower/original.jpg', ...
 %     3/2, 1, 1/2, 4, 80, 5, 5, false);
 
-[l, uData, vData] = get_segmentation('./test_cases/custom/test3.png', ...
-    3/2, 5/2, 1/2, 8, 40, 8, 8, false);
 
-%% Segmentation Algorithm
+q = 2; r = 1;
+p_lst = [0 0.5 1 1.5 2 2.5 10 20];
+[l, uData, vData] = get_segmentation('./test_cases/complicatedflower/original.png', ...
+p_lst, q, r, 8, 40, 10, 10, false);
+
+p = 0.5; r = 0.5;
+q_lst = [0 0.5 1 1.5 2 2.5 10 20];
+[l, uData, vData] = get_segmentation('./test_cases/complicatedflower/original.png', ...
+p, q_lst, r, 8, 40, 10, 10, false);
+
+
+%% Segmentations Algorithm
 % Takes in: 
 %  path: the (relative) path to an image 
 %  P: the value of p to be used in the normalization
@@ -42,8 +51,11 @@ clear all; close all; clc;
 % Plots the specified range of eigenfunctions v_{minI}, ..., v_{maxI} to 
 % be plotted, and returns l (the list of eigenvalues identified). It also
 % returns embeddings in terms of u and v. 
-function [l, uData, vData] = get_segmentation(path, P, Q, R, K, maxL, ...
+function [l, uData, vData] = get_segmentation(path, P_lst, Q_lst, R_lst, K, maxL, ...
     num_clusters_u, num_clusters_v, swap)
+    dest = ['./results/' datestr(datetime('now'))];
+    mkdir(dest);
+    num = 1;
     global M   
     global rho_matrix
     global q 
@@ -62,43 +74,69 @@ function [l, uData, vData] = get_segmentation(path, P, Q, R, K, maxL, ...
     figure(1)
     imshow(img)
     title ('Original Image', 'Interpreter', 'Latex', 'Fontsize', 14)
+    temp=[dest,filesep,num2str(num),'.png'];
+    saveas(gca,temp);
+    num = num + 1;
     % SET GLOBAL VARIABLES ------------------------------------------------
     rho_matrix = img;
     M = length(img); 
-    q = Q; 
-    pr = P + R;
-    % CREAT EVP MODEL -----------------------------------------------------
-    model = construct_laplacian_model();
-    % Plot the domain
-    figure(2)
-    plot_domain(model)
-    % Calculate eigenvalues
-    results = solve_evp(model,[-epsilon, maxL],epsilon);
-    l = results.Eigenvalues;
-    % EIGENFUNCTION PLOTS -------------------------------------------------
-    [a, ~] = numSubplots(K);
-    for i = 1:K
-        % Plot v_i
-        figure(3)
-        subplot(a(1), a(2), i)
-        plot_v(i, results, model)
-        % Plot u_i
-        figure(4)
-        subplot(a(1), a(2), i)
-        plot_u(i, results, R)
+    for P = P_lst
+        for Q = Q_lst
+            for R = R_lst
+                q = Q; 
+                pr = P + R;
+                % CREAT EVP MODEL -----------------------------------------------------
+                model = construct_laplacian_model();
+                % Plot the domain
+                figure(2)
+                plot_domain(model)
+                temp=[dest,filesep,num2str(num),'.png'];
+                saveas(gca,temp);
+                num = num + 1;
+                % Calculate eigenvalues
+                results = solve_evp(model,[-epsilon, maxL],epsilon);
+                l = results.Eigenvalues;
+                % EIGENFUNCTION PLOTS -------------------------------------------------
+                [a, ~] = numSubplots(K);
+                figure(3)
+                for i = 1:K
+                    % Plot v_i
+                    subplot(a(1), a(2), i)
+                    plot_v(i, results, model)
+                end
+                temp=[dest,filesep,num2str(num),'.png'];
+                saveas(gca,temp);
+                num = num + 1;
+                
+                figure(4)
+                for i = 1:K
+                    % Plot u_i
+                    subplot(a(1), a(2), i)
+                    plot_u(i, results, R)
+                end
+                temp=[dest,filesep,num2str(num),'.png'];    
+                saveas(gca,temp);
+                num = num + 1;
+                %figure(3); %sgtitle('Transformed eigenvectors $v$', 'Interpreter', 'Latex');
+                %figure(4); %sgtitle('Transformed eigenvectors $u$', 'Interpreter', 'Latex');
+                % RETRIEVE EMBEDDING --------------------------------------------------
+                [uData, vData] = get_embedding(results, K, R);
+                % RUN KMEANS ON EMBEDDING ---------------------------------------------
+                figure(5)
+                cluster(uData, K, num_clusters_u, ...
+                    ['Segmentation using $\{u_i\}$ : p = ' num2str(P) ' , q = ' num2str(Q) ' , r = ' num2str(R)])
+                temp=[dest,filesep,num2str(num),'.png'];
+                saveas(gca,temp);
+                num = num + 1;
+                figure(6)
+                cluster(vData, K, num_clusters_v, ...
+                    ['Segmentation using $\{v_i\}$ : p = ' num2str(P) ' , q = ' num2str(Q) ' , r = ' num2str(R)])
+                temp=[dest,filesep,num2str(num),'.png'];
+                saveas(gca,temp);
+                num = num + 1;
+            end
+        end
     end
-    figure(3); sgtitle('Transformed eigenvectors $v$', 'Interpreter', 'Latex');
-    figure(4); sgtitle('Transformed eigenvectors $u$', 'Interpreter', 'Latex');
-    % RETRIEVE EMBEDDING --------------------------------------------------
-    [uData, vData] = get_embedding(results, K, R);
-    % RUN KMEANS ON EMBEDDING ---------------------------------------------
-    figure(5)
-    subplot(1, 2, 1)
-    cluster(uData, K, num_clusters_u, ...
-        'Segmentation obtained using eigenfunctions $\{u_i\}$')
-    subplot(1, 2, 2)
-    cluster(vData, K, num_clusters_v, ...
-        'Segmentation obtained using eigenfunctions $\{v_i\}$')
 end
 % Plots the final segmentation using kmeans on the embedding
 function [classU, classV] = cluster(data, K, num_clusters, s)
@@ -133,20 +171,23 @@ end
 % Plots eigenfunction v_i
 function plot_v(i, results, model)
     v = results.Eigenvectors;
-    pdeplot(model,'XYData',v(:,i));
-    s = strcat('$v_', num2str(i), '(x_1, x_2)$');
-    title(s,'Interpreter', 'Latex', 'Fontsize', 14)
-    xlabel('$x_1$', 'Interpreter', 'Latex', ...
-        'Interpreter', 'Latex', 'Fontsize', 14)
-    ylabel('$x_2$', 'Interpreter', 'Latex', ...
-        'Interpreter', 'Latex', 'Fontsize', 14)
+    [M,N] = size(v);
+    if i<=N
+        pdeplot(model,'XYData',v(:,i));
+        s = strcat('$v_', num2str(i), '(x_1, x_2)$');
+        title(s,'Interpreter', 'Latex', 'Fontsize', 14)
+        xlabel('$x_1$', 'Interpreter', 'Latex', ...
+            'Interpreter', 'Latex', 'Fontsize', 14)
+        ylabel('$x_2$', 'Interpreter', 'Latex', ...
+            'Interpreter', 'Latex', 'Fontsize', 14)
+    end
 end
 % Plots eigenfunction u_i
 function plot_u(i, results, r)
     u = getu(i, results, r); 
     imagesc(u)
     colorbar
-    s = strcat('Plot of $u_', num2str(i), '$ mapped to image pixels');
+    s = strcat('$u_', num2str(i), '$');
     title(s,'Interpreter', 'Latex', 'Interpreter', 'Latex', ...
         'Fontsize', 14)
     xlabel('pixel vertical coordinate', 'Interpreter', 'Latex', ...
