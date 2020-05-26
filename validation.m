@@ -40,12 +40,16 @@ rho_2_dense(200:225, 275:300) = 1;
 rho_2_truth(200:225, 275:300) = 7; 
 rho_2_dense(800:900, 100:200) = 1; 
 rho_2_truth(800:900, 100:200) = 8; 
-
+N = 10; 
 
 % %% Main execution block 
-% [l, clustersu, clustersv] = get_segmentation(rho_1_dense, 3/2, 3/2, 1/2, ...
-%     2, 50, 3, 3);
-% compute_quality(clustersu, 3, rho_1_truth)
+accuracies = 1:N; 
+for reps=1:N
+    [l, clustersu, clustersv] = get_segmentation(rho_2_dense, 3/2, 3/2, 1/2, ...
+        7, 70, 8, 8);
+    accuracies(reps) = compute_quality(clustersu, 8, rho_2_truth);
+end
+mean(accuracies)
 
 function quality = compute_quality(clusters, num_clusters, truth)
     % compute all permutations
@@ -62,7 +66,7 @@ function quality = compute_quality(clusters, num_clusters, truth)
         end
         acc(p) = sum(sum(temp==truth))/(length(temp))^2;
     end
-    quality = max(acc); 
+    quality = max(acc);
 end
 
 %% Segmentation Algorithm
