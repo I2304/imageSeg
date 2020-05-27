@@ -1,22 +1,24 @@
 clear all; close all; clc; 
 
 % Example: 
-evaluate_segmentation(3/2, 2, 1/2, 60, 3);  
+evaluate_segmentation(3/2, 2, 1/2, 60, 3, true, 100);  
 
 % Takes in: 
 %  P: the value of p to be used in the normalization
 %  Q: the value of q to be used in the normalization
 %  R: the value of r to be used in the normalization 
 %  maxL: the maximum magnitude eigenvalue (e.g., 40) to be solved for
-%  index: the id of the image (clean images: ids 1-4; noisy images: todo)
-function [l] = evaluate_segmentation(P, Q, R, maxL, id)
+%  index: the id of the image (clean images: ids 1-4)
+%  noise: true if noise wanted 
+%  intensity: intensity of noise when noise == true (0~1)
+function [l] = evaluate_segmentation(P, Q, R, maxL, id, noise, intensity)
     global M   
     global rho_matrix
     global q 
     global pr 
     epsilon = 10^(-3);
     % LOAD & PRE-PROCESS IMAGE --------------------------------------------
-    [img, truth, num_clusters] = test_img(id);
+    [img, truth, num_clusters] = test_img(id, noise, intensity);
     K = num_clusters-1; 
     figure(1)
     a1 = subplot(1, 3, 1);
@@ -54,7 +56,9 @@ function [l] = evaluate_segmentation(P, Q, R, maxL, id)
     figure(2); 
     s = strcat('Eigenfunctions for ($p$, $q$, $r$) = (', ...
         num2str(P), ',', num2str(Q),',', num2str(R), ')');
-    sgtitle(s, 'Interpreter', 'Latex', 'Fontsize', 11);
+    [ax,h] = suplabel(s, 't');
+    set(h, 'Interpreter', 'Latex', 'Fontsize', 11);
+
     % RETRIEVE EMBEDDING --------------------------------------------------
     [uData, ~] = get_embedding(results, K, R);
     % RUN KMEANS ON EMBEDDING ---------------------------------------------
@@ -71,7 +75,8 @@ function [l] = evaluate_segmentation(P, Q, R, maxL, id)
     end
     s = strcat('Example segmentations for ($p$, $q$, $r$) = (', ...
         num2str(P), ',', num2str(Q),',', num2str(R), ')');
-    sgtitle(s, 'Interpreter', 'Latex', 'Fontsize', 11);
+    [ax,h] = suplabel(s, 't');
+    set(h, 'Interpreter', 'Latex', 'Fontsize', 11);
     disp(mean(qualities))
 end
 % Plots the final segmentation using kmeans on the embedding
