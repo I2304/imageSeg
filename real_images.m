@@ -42,7 +42,8 @@ clear all; close all; clc;
 % returns embeddings in terms of u and v.
 function [l, uData, vData] = get_segmentation(path, P, Q, R, K, maxL, ...
     num_clusters, swap)
-    dest = ['./results/' datestr(datetime('now', 'InputFormat','yyyy-MM-dd HH-mm-ss-SSS'))];
+    dest = ['./results/' nextname('figure_set','_1','')];
+%     dest = ['./results/' datestr(datetime('now', 'InputFormat','yyyy-MM-dd HH_mm_ss_SSS'))];
     mkdir(dest);
     global M
     global rho_matrix
