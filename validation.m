@@ -23,18 +23,18 @@ function [l] = evaluate_segmentation(P, Q, R, maxL, id)
     imagesc(img)
     colormap(a1, gray);
     c = colorbar; 
-    ylabel(c, '[0, 1] Intensity', 'Interpreter', 'Latex', 'Fontsize', 14)
-    xlabel('pixel $i$', 'Interpreter', 'Latex', 'Fontsize', 14)
-    ylabel('pixel $j$', 'Interpreter', 'Latex', 'Fontsize', 14)
-    title ('Original Image', 'Interpreter', 'Latex', 'Fontsize', 14)
+    ylabel(c, '[0, 1] Intensity', 'Interpreter', 'Latex', 'Fontsize', 11)
+    xlabel('pixel $i$', 'Interpreter', 'Latex', 'Fontsize', 11)
+    ylabel('pixel $j$', 'Interpreter', 'Latex', 'Fontsize', 11)
+    title ('Original Image', 'Interpreter', 'Latex', 'Fontsize', 11)
     a2 = subplot(1, 3, 2);
     imagesc(truth)
     colormap(a2, jet); 
     c = colorbar; 
-    ylabel(c, 'Cluster Index', 'Interpreter', 'Latex', 'Fontsize', 14)
-    xlabel('pixel $i$', 'Interpreter', 'Latex', 'Fontsize', 14)
-    ylabel('pixel $j$', 'Interpreter', 'Latex', 'Fontsize', 14)
-    title ('Ground Truth', 'Interpreter', 'Latex', 'Fontsize', 14)
+    ylabel(c, 'Cluster Index', 'Interpreter', 'Latex', 'Fontsize', 11)
+    xlabel('pixel $i$', 'Interpreter', 'Latex', 'Fontsize', 11)
+    ylabel('pixel $j$', 'Interpreter', 'Latex', 'Fontsize', 11)
+    title ('Ground Truth', 'Interpreter', 'Latex', 'Fontsize', 11)
     % SET GLOBAL VARIABLES ------------------------------------------------
     rho_matrix = img;
     M = length(img); 
@@ -51,40 +51,51 @@ function [l] = evaluate_segmentation(P, Q, R, maxL, id)
         subplot(a(1), a(2), i)
         plot_varphi(i, results, R)
     end
-    figure(2); sgtitle('Eigenfunctions $\varphi_i$', ...
-        'Interpreter', 'Latex', 'Fontsize', 14);
+    figure(2); 
+    s = strcat('Eigenfunctions for ($p$, $q$, $r$) = (', ...
+        num2str(P), ',', num2str(Q),',', num2str(R), ')');
+    sgtitle(s, 'Interpreter', 'Latex', 'Fontsize', 11);
     % RETRIEVE EMBEDDING --------------------------------------------------
     [uData, ~] = get_embedding(results, K, R);
     % RUN KMEANS ON EMBEDDING ---------------------------------------------
     figure(1)
     a3 = subplot(1, 3, 3);
-    cluster(uData, truth, K, num_clusters, a3, 10);
+    cluster(uData, truth, K, num_clusters, a3, 10, 0);
     figure(3)
-    qualities = 1:15;
-    for i = 1:15
-        a3 = subplot(3, 5, i);
-        qualities(i) = cluster(uData, truth, K, num_clusters, a3, 1);
+    qualities = 1:3;
+    for i = 1:30
+        if i <= 10
+            a3 = subplot(2, 5, i);
+        end
+        qualities(i) = cluster(uData, truth, K, num_clusters, a3, 1, i);
     end
-    s = strcat('Highest Segmentation Accuracy (best of 10) was ', ...
-        {' '}, num2str(mean(qualities)), ...
-        ' for ($p$, $q$, $r$) = (', ...
+    s = strcat('Example segmentations for ($p$, $q$, $r$) = (', ...
         num2str(P), ',', num2str(Q),',', num2str(R), ')');
-    sgtitle(s, 'Interpreter', 'Latex', 'Fontsize', 14);
+    sgtitle(s, 'Interpreter', 'Latex', 'Fontsize', 11);
+    disp(mean(qualities))
 end
 % Plots the final segmentation using kmeans on the embedding
-function quality = cluster(data, truth, K, num_clusters, a3, reps)
+function quality = cluster(data, truth, K, num_clusters, a3, reps, i)
     X = reshape(data, [(length(data))^2, K]);
     clusters = reshape(kmeans(X, num_clusters, 'Replicates', reps), ...
         [(length(data)), (length(data))]); 
     quality = compute_quality(clusters, truth);
-    imagesc(clusters)
-    colormap(a3, jet); 
-    c = colorbar; 
-    ylabel(c, 'Cluster Index', 'Interpreter', 'Latex', 'Fontsize', 14)
-    s = strcat('Segmentation (Accuracy = ', num2str(quality), ')');
-    title(s, 'Interpreter', 'Latex', 'Fontsize', 14)
-    xlabel('pixel $i$', 'Interpreter', 'Latex', 'Fontsize', 14)
-    ylabel('pixel $j$', 'Interpreter', 'Latex', 'Fontsize', 14)
+    if i <= 10
+        imagesc(clusters)
+        colormap(a3, jet); 
+        c = colorbar; 
+        ylabel(c, 'Cluster Index', 'Interpreter', 'Latex', 'Fontsize', 11)
+        if reps > 1
+            s = strcat('Segmentation (best of 10 kmeans replicates), (Accuracy =', ...
+                {' '}, num2str(quality), ')');
+        else 
+            s = strcat('Segmentation Accuracy = ', {' '}, ...
+                num2str(quality));
+        end
+        title(s, 'Interpreter', 'Latex', 'Fontsize', 11)
+        xlabel('pixel $i$', 'Interpreter', 'Latex', 'Fontsize', 11)
+        ylabel('pixel $j$', 'Interpreter', 'Latex', 'Fontsize', 11)
+    end
 end
 % Computes the embedding of the image from the eigenfunctions
 function [uData, vData] = get_embedding(results, K, r)
@@ -108,11 +119,11 @@ function plot_varphi(i, results, r)
     colorbar
     s = strcat('Plot of $\varphi_', num2str(i), '$ mapped to image pixels');
     title(s,'Interpreter', 'Latex', 'Interpreter', 'Latex', ...
-        'Fontsize', 14)
+        'Fontsize', 11)
     xlabel('pixel $i$', 'Interpreter', 'Latex', ...
-        'Fontsize', 14)
+        'Fontsize', 11)
     ylabel('pixel $j$', 'Interpreter', 'Latex', ...
-        'Fontsize', 14)
+        'Fontsize', 11)
 end
 
 % Takes in the results of the eigenvalue solver and returns corresponding 
