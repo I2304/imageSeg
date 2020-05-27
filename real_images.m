@@ -1,88 +1,114 @@
-clear all; close all; clc; 
+clear all; close all; clc;
 
-% Example: 
-evaluate_segmentation(3/2, 2, 1/2, 60, 3);  
+%% Main execution block
 
-% Takes in: 
+% Example segmentations
+% WORKS BEST WITH num_clusters = K+1
+
+% All test cases here are for the normalized laplacian (3/2, 2, 1/2) = (P,
+% Q, R). These parameters can be tuned
+
+% [l, uData, vData] = get_segmentation('./test_cases/density_2_dots/original.png', ...
+%     3/2, 2, 1/2, 2, 70, 3, 3, true);
+
+% [l, uData, vData] = get_segmentation('./test_cases/brain/original.png', ...
+%     3/2, 2, 1/2, 9, 70, 10, 10, false);
+
+% [l, uData, vData] = get_segmentation('./test_cases/pattern_12_dots/original.png', ...
+%     3/2, 2, 1/2, 11, 80, 12, 12, true);
+
+% [l, uData, vData] = get_segmentation('./test_cases/usnccm_7_letters/original.png', ...
+%     3/2, 2, 1/2, 6, 70, 7, 7, true);
+
+[l, uData, vData] = get_segmentation('./test_cases/flower/original.jpg', ...
+    3/2, 1, 1/2, 4, 80, 5, false);
+
+
+%% Segmentations Algorithm
+% Takes in:
+%  path: the (relative) path to an image
 %  P: the value of p to be used in the normalization
 %  Q: the value of q to be used in the normalization
-%  R: the value of r to be used in the normalization 
+%  R: the value of r to be used in the normalization
+%  K: the number of eigenfunctions (e.g., 6) to be plotted
 %  maxL: the maximum magnitude eigenvalue (e.g., 40) to be solved for
-%  index: the id of the image (clean images: ids 1-4; noisy images: todo)
-function [l] = evaluate_segmentation(P, Q, R, maxL, id)
-    global M   
+%  num_clusters_u: number of clusters when segmenting on u
+%  num_clusters_v: number of clusters when segmenting on v
+%  swap: if the segmentation is bad, consider switching swap to true
+%        to swap the contrast of the image as this may improve the
+%        calculation of the eigenfunctions
+% Plots the specified range of eigenfunctions v_{minI}, ..., v_{maxI} to
+% be plotted, and returns l (the list of eigenvalues identified). It also
+% returns embeddings in terms of u and v.
+function [l, uData, vData] = get_segmentation(path, P, Q, R, K, maxL, ...
+    num_clusters, swap)
+    dest = ['./results/' datestr(datetime('now', 'InputFormat','yyyy-MM-dd HH-mm-ss-SSS'))];
+    mkdir(dest);
+    global M
     global rho_matrix
-    global q 
-    global pr 
+    global q
+    global pr
     epsilon = 10^(-3);
     % LOAD & PRE-PROCESS IMAGE --------------------------------------------
-    [img, truth, num_clusters] = test_img(id);
-    K = num_clusters-1; 
+    img = mat2gray(imread(path));
+    % Force image to be square
+    img = img(1:min(size(img, 1), size(img, 2)), ...
+        1:min(size(img, 1), size(img, 2)));
+    if swap == true
+        img = 1-(cast(img, 'double'));
+    end
+    % Make a small correction to zero terms (to avoid numerical issues)
+    img(img == 0) = .01;
     figure(1)
-    a1 = subplot(1, 3, 1);
     imagesc(img)
-    colormap(a1, gray);
+    colormap(gray)
     c = colorbar; 
-    ylabel(c, '[0, 1] Intensity', 'Interpreter', 'Latex', 'Fontsize', 14)
+    ylabel(c, '[0, 1] intensity', 'Interpreter', 'Latex', 'Fontsize', 14)
     xlabel('pixel $i$', 'Interpreter', 'Latex', 'Fontsize', 14)
     ylabel('pixel $j$', 'Interpreter', 'Latex', 'Fontsize', 14)
-    title ('Original Image', 'Interpreter', 'Latex', 'Fontsize', 14)
-    a2 = subplot(1, 3, 2);
-    imagesc(truth)
-    colormap(a2, jet); 
-    c = colorbar; 
-    ylabel(c, 'Cluster Index', 'Interpreter', 'Latex', 'Fontsize', 14)
-    xlabel('pixel $i$', 'Interpreter', 'Latex', 'Fontsize', 14)
-    ylabel('pixel $j$', 'Interpreter', 'Latex', 'Fontsize', 14)
-    title ('Ground Truth', 'Interpreter', 'Latex', 'Fontsize', 14)
+    title ('Original Omage', 'Interpreter', 'Latex', 'Fontsize', 14)
+    temp=[dest,filesep,'original_image.png'];
+    saveas(gca,temp);
     % SET GLOBAL VARIABLES ------------------------------------------------
     rho_matrix = img;
-    M = length(img); 
-    q = Q; 
+    M = length(img);
+    q = Q;
     pr = P + R;
-    % CREAT EVP MODEL -----------------------------------------------------
+    % CREATE EVP MODEL ----------------------------------------------------
     model = construct_laplacian_model();
     results = solve_evp(model,[-epsilon, maxL],epsilon);
     l = results.Eigenvalues;
     % EIGENFUNCTION PLOTS -------------------------------------------------
     [a, ~] = numSubplots(K);
+    figure(2)
     for i = 1:K
-        figure(2)
+        % Plot u_i
         subplot(a(1), a(2), i)
-        plot_varphi(i, results, R)
+        plot_u(i, results, R)
     end
-    figure(2); sgtitle('Eigenfunctions $\varphi_i$', ...
-        'Interpreter', 'Latex', 'Fontsize', 14);
-    % RETRIEVE EMBEDDING --------------------------------------------------
-    [uData, ~] = get_embedding(results, K, R);
-    % RUN KMEANS ON EMBEDDING ---------------------------------------------
-    figure(1)
-    a3 = subplot(1, 3, 3);
-    cluster(uData, truth, K, num_clusters, a3, 10);
+    temp=[dest,filesep,'eigenfunctions_', num2str(P),'_',num2str(Q),'_',num2str(R),'.png'];
+    sgtitle('Plots of eigenfunctions', 'Interpreter', 'Latex', 'Fontsize', 14)
+    saveas(gca,temp);
+    % RETRIEVE EMBEDDING & KMEANS -----------------------------------------
+    [uData, vData] = get_embedding(results, K, R);
     figure(3)
-    qualities = 1:15;
-    for i = 1:15
-        a3 = subplot(3, 5, i);
-        qualities(i) = cluster(uData, truth, K, num_clusters, a3, 1);
-    end
-    s = strcat('Highest Segmentation Accuracy (best of 10) was ', ...
-        {' '}, num2str(mean(qualities)), ...
-        ' for ($p$, $q$, $r$) = (', ...
-        num2str(P), ',', num2str(Q),',', num2str(R), ')');
-    sgtitle(s, 'Interpreter', 'Latex', 'Fontsize', 14);
+    cluster(uData, K, num_clusters, ...
+        ['Segmentation using $\{u_i\}$ : p = ' num2str(P) ' , q = ' num2str(Q) ' , r = ' num2str(R)])
+    temp=[dest,filesep,'segmentation_', num2str(P),'_',num2str(Q),'_',num2str(R),'.png'];
+    saveas(gca,temp);
 end
 % Plots the final segmentation using kmeans on the embedding
-function quality = cluster(data, truth, K, num_clusters, a3, reps)
+function cluster(data, K, num_clusters, s)
     X = reshape(data, [(length(data))^2, K]);
-    clusters = reshape(kmeans(X, num_clusters, 'Replicates', reps), ...
-        [(length(data)), (length(data))]); 
-    quality = compute_quality(clusters, truth);
+    clusters = reshape(kmeans(X, num_clusters), ...
+        [(length(data)), (length(data))]);
     imagesc(clusters)
-    colormap(a3, jet); 
-    c = colorbar; 
-    ylabel(c, 'Cluster Index', 'Interpreter', 'Latex', 'Fontsize', 14)
-    s = strcat('Segmentation (Accuracy = ', num2str(quality), ')');
     title(s, 'Interpreter', 'Latex', 'Fontsize', 14)
+    c = colorbar;
+    colorTitleHandle = get(c,'Title');
+    titleString = 'Cluster Index';
+    set(colorTitleHandle ,'String',titleString, 'Interpreter', 'Latex', ...
+        'Fontsize', 14);
     xlabel('pixel $i$', 'Interpreter', 'Latex', 'Fontsize', 14)
     ylabel('pixel $j$', 'Interpreter', 'Latex', 'Fontsize', 14)
 end
@@ -96,17 +122,17 @@ function [uData, vData] = get_embedding(results, K, r)
         [xq,yq] = meshgrid(linspace(0, 1, M));
         v = interpolateSolution(results,xq,yq,k);
         u = flip(reshape(v,size(xq)), 1).*((rho_matrix).^(r));
-        vData(:, :, k) = flip(reshape(v,size(xq)), 1); 
-        uData(:, :, k) = u; 
+        vData(:, :, k) = flip(reshape(v,size(xq)), 1);
+        uData(:, :, k) = u;
     end
 end
-
+%% Plotting helper functions
 % Plots eigenfunction u_i
-function plot_varphi(i, results, r)
-    u = getu(i, results, r); 
+function plot_u(i, results, r)
+    u = getu(i, results, r);
     imagesc(u)
     colorbar
-    s = strcat('Plot of $\varphi_', num2str(i), '$ mapped to image pixels');
+    s = strcat('$u_', num2str(i), '$');
     title(s,'Interpreter', 'Latex', 'Interpreter', 'Latex', ...
         'Fontsize', 14)
     xlabel('pixel $i$', 'Interpreter', 'Latex', ...
@@ -114,8 +140,7 @@ function plot_varphi(i, results, r)
     ylabel('pixel $j$', 'Interpreter', 'Latex', ...
         'Fontsize', 14)
 end
-
-% Takes in the results of the eigenvalue solver and returns corresponding 
+% Takes in the results of the eigenvalue solver and returns corresponding
 % eigenfunction u_i.
 function u = getu(i, results, r)
     global M
@@ -125,6 +150,7 @@ function u = getu(i, results, r)
     u = flip(reshape(v,size(xq)), 1).*((rho_matrix).^(r));
 end
 
+%% Eigensolver helper functions.
 % Solves eigenvalue problem and runs error checking.
 function results = solve_evp(model, range, epsilon)
     results = solvepdeeig(model,range);
@@ -133,15 +159,14 @@ function results = solve_evp(model, range, epsilon)
         disp('Uh oh, the first eigenvalue is nonzero. Check range.')
     end
 end
-
-% Computes a pde model for the L operator with zero neumann BC's, 
+% Computes a pde model for the L operator with zero neumann BC's,
 % specified square geometry, and custom tolerance and mesh size.
 function model = construct_laplacian_model()
     g = get_square_geometry();
     model = createpde();
-    % Geometry specification 
+    % Geometry specification
     geometryFromEdges(model,g);
-    % Solver specificiation 
+    % Solver specificiation
     model.SolverOptions.AbsoluteTolerance = 5.0000e-025;
     model.SolverOptions.RelativeTolerance = 5.0000e-025;
     model.SolverOptions.ReportStatistics = 'on';
@@ -153,24 +178,24 @@ function model = construct_laplacian_model()
     % Mesh size
     generateMesh(model,'Hmax',0.01)
 end
-
-% Computes a [0, 1] x [0, 1] square geometry. 
+% Computes a [0, 1] x [0, 1] square geometry.
 function g = get_square_geometry()
     lowerLeft  = [0 , 0 ];
     lowerRight = [1 , 0 ];
     upperRight = [1 , 1];
     upperLeft =  [0 , 1];
     S = [3,4 lowerLeft(1), lowerRight(1), upperRight(1), upperLeft(1), ...
-             lowerLeft(2), lowerRight(2), upperRight(2), upperLeft(2)];                     
+             lowerLeft(2), lowerRight(2), upperRight(2), upperLeft(2)];
     gdm = S';
     % Names
     ns = 'S';
-    % Set formula 
+    % Set formula
     sf = 'S';
     % Invoke decsg
     g = decsg(gdm,ns,sf');
 end
 
+%% Coefficient specification functions (must follow a very specific format)
 % This function encodes the coefficient d, which in our formulation is
 % \rho^(p+r).
 function dmatrix = dcoeffunction(location,state)
@@ -182,10 +207,10 @@ function dmatrix = dcoeffunction(location,state)
     global M
     nr = numel(location.x);
     dmatrix = ones(1,nr);
-    % Iterate over all nodes in location, and evaluate the value of 
-    % rho^(p+r) pointwise. Store the result in d_matrix. 
+    % Iterate over all nodes in location, and evaluate the value of
+    % rho^(p+r) pointwise. Store the result in d_matrix.
     for index = 1:nr
-        % Obtain position in location vector 
+        % Obtain position in location vector
         x = location.x(index);  % x location in mesh
         y = location.y(index);  % y location in mesh
         % Map (x, y) --> (i, j) pixel in image
@@ -193,16 +218,15 @@ function dmatrix = dcoeffunction(location,state)
         j = ceil(M*x);          % j position in image
         % Correction for edge case
         if i == 0
-            i = 1; 
+            i = 1;
         end
         if j == 0
-            j = 1; 
+            j = 1;
         end
         % Store result
         dmatrix(index) = (rho_matrix(i,j))^(pr);
     end
 end
-
 % This function encodes the coefficient c, which in our formulation is
 % \rho^(q).
 function cmatrix = ccoeffunction(location,state)
@@ -214,10 +238,10 @@ function cmatrix = ccoeffunction(location,state)
     global M
     nr = numel(location.x);
     cmatrix = ones(1,nr);
-    % Iterate over all nodes in location, and evaluate the value of 
-    % rho^(p+r) pointwise. Store the result in d_matrix. 
+    % Iterate over all nodes in location, and evaluate the value of
+    % rho^(p+r) pointwise. Store the result in d_matrix.
     for index = 1:nr
-        % Obtain position in location vector 
+        % Obtain position in location vector
         x = location.x(index);  % x location in mesh
         y = location.y(index);  % y location in mesh
         % Map (x, y) --> (i, j) pixel in image
@@ -225,35 +249,12 @@ function cmatrix = ccoeffunction(location,state)
         j = ceil(M*x);          % j position in image
         % Correction for edge case
         if i == 0
-            i = 1; 
+            i = 1;
         end
         if j == 0
-            j = 1; 
+            j = 1;
         end
         % Store result
         cmatrix(index) = (rho_matrix(i,j))^(q);
     end
-end
-
-function quality = compute_quality(clusters, truth)
-    confusion_matrix=confusionmat(...
-        reshape(truth, [size(truth, 1)^2, 1]),...
-        reshape(clusters, [size(clusters, 1)^2, 1]));
-    cost_matrix = make_cost_matrix(confusion_matrix); 
-    [assignment, ~] = munkres(cost_matrix);
-    cpy = clusters; 
-    for i = 1:length(assignment)
-        for j = 1:length(assignment)
-            if assignment(i, j) == 1
-             cpy(clusters == j) = i; 
-            end
-        end
-    end
-    quality = sum(sum(truth==cpy))/(length(cpy))^2;
-end
-
-% Compute cost matrix
-function cost_matrix = make_cost_matrix(confusion_matrix)
-    s = max(confusion_matrix); 
-    cost_matrix = -confusion_matrix + s; 
 end
