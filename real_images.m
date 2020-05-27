@@ -86,15 +86,18 @@ function [l, uData, vData] = get_segmentation(path, P, Q, R, K, maxL, ...
         subplot(a(1), a(2), i)
         plot_u(i, results, R)
     end
-    temp=[dest,filesep,'eigenfunctions_', num2str(P),'_',num2str(Q),'_',num2str(R),'.png'];
-    sgtitle('Plots of eigenfunctions', 'Interpreter', 'Latex', 'Fontsize', 14)
+    temp=[dest,filesep,'eigenfunctions_', ...
+        erase(num2str(P), '.'),'_', erase(num2str(Q), '.') ,...
+        '_',erase(num2str(R), '.'),'.png'];
+    sgtitle('Eigenfunctions', 'Interpreter', 'Latex', 'Fontsize', 14);
     saveas(gca,temp);
     % RETRIEVE EMBEDDING & KMEANS -----------------------------------------
     [uData, vData] = get_embedding(results, K, R);
     figure(3)
     cluster(uData, K, num_clusters, ...
         ['Segmentation using $\{u_i\}$ : p = ' num2str(P) ' , q = ' num2str(Q) ' , r = ' num2str(R)])
-    temp=[dest,filesep,'segmentation_', num2str(P),'_',num2str(Q),'_',num2str(R),'.png'];
+    temp=[dest,filesep,'segmentation_', erase(num2str(P), '.'),...
+        '_',erase(num2str(Q), '.'),'_',erase(num2str(R), '.'),'.png'];
     saveas(gca,temp);
 end
 % Plots the final segmentation using kmeans on the embedding
