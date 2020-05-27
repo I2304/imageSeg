@@ -1,7 +1,7 @@
 clear all; close all; clc; 
 
 % Example: 
-evaluate_segmentation(1, 1, 1, 60, 3, true, 0.5);  
+evaluate_segmentation(3/2, 2, 1/2, 60, 3);  
 
 % Takes in: 
 %  P: the value of p to be used in the normalization
@@ -10,7 +10,7 @@ evaluate_segmentation(1, 1, 1, 60, 3, true, 0.5);
 %  maxL: the maximum magnitude eigenvalue (e.g., 40) to be solved for
 %  index: the id of the image (clean images: ids 1-4)
 %  noise: true if noise wanted 
-%  intensity: intensity of noise when noise == true (0~1)
+%  intensity: intensity of noise when noise == true
 function [l] = evaluate_segmentation(P, Q, R, maxL, id, noise, intensity)
     global M   
     global rho_matrix
@@ -18,7 +18,7 @@ function [l] = evaluate_segmentation(P, Q, R, maxL, id, noise, intensity)
     global pr 
     epsilon = 10^(-3);
     % LOAD & PRE-PROCESS IMAGE --------------------------------------------
-    [img, truth, num_clusters] = test_img(id, noise, intensity);
+    [img, truth, num_clusters] = test_img(id);
     K = num_clusters-1; 
     figure(1)
     a1 = subplot(1, 3, 1);
