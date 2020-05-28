@@ -89,7 +89,8 @@ function [l, uData, vData] = get_segmentation(path, P, Q, R, K, maxL, ...
     temp=[dest,filesep,'eigenfunctions_', ...
         erase(num2str(P), '.'),'_', erase(num2str(Q), '.') ,...
         '_',erase(num2str(R), '.'),'.png'];
-    sgtitle('Eigenfunctions', 'Interpreter', 'Latex', 'Fontsize', 14);
+    [ax,h] = suplabel('Eigenfunctions', 't');
+    set(h, 'Interpreter', 'Latex', 'Fontsize', 14);
     saveas(gca,temp);
     % RETRIEVE EMBEDDING & KMEANS -----------------------------------------
     [uData, vData] = get_embedding(results, K, R);
