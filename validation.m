@@ -3,6 +3,7 @@ clear all; close all; clc;
 % Example: 
 % evaluate_segmentation(1, 1, 1, 60, 2, false, 0.25);  
 
+
 % BALANCED CASE
 accuracies = zeros(9, 5); 
 params = [...
@@ -19,7 +20,7 @@ params = [...
 for m = 1:9
     row = params(m, :); 
     [l, QC, QT] = evaluate_segmentation(row(1), row(2), row(3), 60, 4, ...
-        true, 0.25); 
+        true, 0.03); 
     accuracies(m, 1:3) = row; 
     accuracies(m, 4) = QT; 
     accuracies(m, 5) = QC; 
