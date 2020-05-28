@@ -1,7 +1,7 @@
 clear all; close all; clc; 
 
 % Example: 
-evaluate_segmentation(1, 1, 1, 60, 3, true, 0.5);  
+evaluate_segmentation(1, 1, 1, 60, 3, true, 0.25);  
 
 % Takes in: 
 %  P: the value of p to be used in the normalization
@@ -56,46 +56,61 @@ function [l] = evaluate_segmentation(P, Q, R, maxL, id, noise, intensity)
     figure(2); 
     s = strcat('Eigenfunctions for ($p$, $q$, $r$) = (', ...
         num2str(P), ',', num2str(Q),',', num2str(R), ')');
-    [ax,h] = suplabel(s, 't');
-    set(h, 'Interpreter', 'Latex', 'Fontsize', 11);
+    [~,h] = suplabel(s, 't');
+    set(h, 'Interpreter', 'Latex', 'Fontsize', 12);
 
     % RETRIEVE EMBEDDING --------------------------------------------------
     [uData, ~] = get_embedding(results, K, R);
+    
     % RUN KMEANS ON EMBEDDING ---------------------------------------------
     figure(1)
     a3 = subplot(1, 3, 3);
     cluster(uData, truth, K, num_clusters, a3, 10, 0);
+    s = strcat('\begin{tabular}{c} Comparison of Image with Segmentation (best ove 10 kmeans replicates) for ($p$, $q$, $r$) = (', ...
+        num2str(P), ',', num2str(Q),',', num2str(R), ')\\ -', '\end{tabular}');
+    [~,h] = suplabel(s, 't');
+    set(h, 'Interpreter', 'Latex', 'Fontsize', 12);
+    
     figure(3)
-    qualities = 1:3;
+    qualities_t = 1:3;
+    qualities_c = 1:3; 
     for i = 1:30
         if i <= 10
             a3 = subplot(2, 5, i);
         end
-        qualities(i) = cluster(uData, truth, K, num_clusters, a3, 1, i);
+        [q_t, q_c] = cluster(uData, truth, K, num_clusters, a3, 1, i);
+        qualities_t(i) = q_t;
+        qualities_c(i) = q_c;  
     end
-    s = strcat('Example segmentations for ($p$, $q$, $r$) = (', ...
-        num2str(P), ',', num2str(Q),',', num2str(R), ')');
-    [ax,h] = suplabel(s, 't');
-    set(h, 'Interpreter', 'Latex', 'Fontsize', 11);
-    disp(mean(qualities))
+    s = strcat('\begin{tabular}{c}Example segmentations for ($p$, $q$, $r$) = (', ...
+        num2str(P), ',', num2str(Q),',', num2str(R), ')\\-\end{tabular}');
+    [~,h] = suplabel(s, 't');
+    set(h, 'Interpreter', 'Latex', 'Fontsize', 12);
+    s = strcat('Total accuracy over 30 reps: ', {' '}, num2str(mean(qualities_t)));
+    disp(s); 
+    s = strcat('Cluster accuracy over 30 reps: ', {' '}, num2str(mean(qualities_c)));
+    disp(s)
 end
 % Plots the final segmentation using kmeans on the embedding
-function quality = cluster(data, truth, K, num_clusters, a3, reps, i)
+function [quality_t, quality_c] = cluster(data, truth, K, num_clusters, a3, reps, i)
     X = reshape(data, [(length(data))^2, K]);
     clusters = reshape(kmeans(X, num_clusters, 'Replicates', reps), ...
         [(length(data)), (length(data))]); 
-    quality = compute_quality(clusters, truth);
+    [quality_t, quality_c] = compute_quality(clusters, truth);
     if i <= 10
         imagesc(clusters)
         colormap(a3, jet); 
         c = colorbar; 
         ylabel(c, 'Cluster Index', 'Interpreter', 'Latex', 'Fontsize', 11)
         if reps > 1
-            s = strcat('Segmentation (best of 10 kmeans replicates), (Accuracy =', ...
-                {' '}, num2str(quality), ')');
+            s = strcat('\begin{tabular}{c} ', ...
+                'TotalAccuracy =', {' '}, num2str(quality_t), ...
+                '\\ ClusterAccuracy = ', {' '}, num2str(quality_c), ...
+                '\end{tabular}');
         else 
-            s = strcat('Segmentation Accuracy = ', {' '}, ...
-                num2str(quality));
+            s = strcat('\begin{tabular}{c}Total Accuracy = ', {' '}, ...
+                num2str(quality_t), '\\ ClusterAccuracy = ', {' '}, ...
+                num2str(quality_c), '\end{tabular}');
         end
         title(s, 'Interpreter', 'Latex', 'Fontsize', 11)
         xlabel('pixel $i$', 'Interpreter', 'Latex', 'Fontsize', 11)
@@ -251,7 +266,7 @@ function cmatrix = ccoeffunction(location,state)
     end
 end
 
-function quality = compute_quality(clusters, truth)
+function [quality_t, quality_c] = compute_quality(clusters, truth)
     confusion_matrix=confusionmat(...
         reshape(truth, [size(truth, 1)^2, 1]),...
         reshape(clusters, [size(clusters, 1)^2, 1]));
@@ -265,7 +280,10 @@ function quality = compute_quality(clusters, truth)
             end
         end
     end
-    quality = sum(sum(truth==cpy))/(length(cpy))^2;
+    % overlal quality
+    quality_t = sum(sum(truth==cpy))/(length(cpy))^2;
+    % quality of clusters only
+    quality_c = (sum(sum((truth==cpy).*(truth~=1))))/(sum((sum(truth~=1)))); 
 end
 
 % Compute cost matrix
