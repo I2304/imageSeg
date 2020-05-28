@@ -42,7 +42,7 @@ clear all; close all; clc;
 % returns embeddings in terms of u and v.
 function [l, uData, vData] = get_segmentation(path, P, Q, R, K, maxL, ...
     num_clusters, swap)
-    dest = ['./results/' nextname('./results/figure_set','_1','')];
+    dest = ['./image_results/' nextname('./image_results/figure_set','_1','')];
     mkdir(dest);
     global M
     global rho_matrix
