@@ -1,0 +1,43 @@
+%file for generating test images
+img1 = test_img(1, false, 0.25);
+
+img2 = test_img(2, false, 0.25);
+figure()
+imagesc(img2)
+c = colorbar; 
+ylabel(c, '[0, 1] Intensity', 'Interpreter', 'Latex', 'Fontsize', 11)
+xlabel('pixel $i$', 'Interpreter', 'Latex', 'Fontsize', 11)
+ylabel('pixel $j$', 'Interpreter', 'Latex', 'Fontsize', 11)
+title ('Test Image 2', 'Interpreter', 'Latex', 'Fontsize', 11)
+
+img3 = test_img(3, false, 0.25);
+figure()
+imagesc(img3)
+c = colorbar; 
+ylabel(c, '[0, 1] Intensity', 'Interpreter', 'Latex', 'Fontsize', 11)
+xlabel('pixel $i$', 'Interpreter', 'Latex', 'Fontsize', 11)
+ylabel('pixel $j$', 'Interpreter', 'Latex', 'Fontsize', 11)
+title ('Test Image 3', 'Interpreter', 'Latex', 'Fontsize', 11)
+
+
+img4 = test_img(4, false, 0.25);
+figure()
+imagesc(img4)
+c = colorbar; 
+ylabel(c, '[0, 1] Intensity', 'Interpreter', 'Latex', 'Fontsize', 11)
+xlabel('pixel $i$', 'Interpreter', 'Latex', 'Fontsize', 11)
+ylabel('pixel $j$', 'Interpreter', 'Latex', 'Fontsize', 11)
+title ('Test Image 4', 'Interpreter', 'Latex', 'Fontsize', 11)
+
+function [] = plot_img(img, title)
+    figure()
+    imagesc(img)
+    c = colorbar; 
+    ylabel(c, '[0, 1] Intensity', 'Interpreter', 'Latex', 'Fontsize', 11)
+    xlabel('pixel $i$', 'Interpreter', 'Latex', 'Fontsize', 11)
+    ylabel('pixel $j$', 'Interpreter', 'Latex', 'Fontsize', 11)
+    title 
+    title ('Test Image 1', 'Interpreter', 'Latex', 'Fontsize', 11)
+    saveas(gcf, 'test_image_1.png')
+
+end

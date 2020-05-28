@@ -1,7 +1,7 @@
 clear all; close all; clc; 
 
 % Example: 
-evaluate_segmentation(1, 1, 1, 60, 3, true, 0.25);  
+evaluate_segmentation(1, 1, 1, 60, 3, false, 0.25);  
 
 % Takes in: 
 %  P: the value of p to be used in the normalization
@@ -66,7 +66,7 @@ function [l] = evaluate_segmentation(P, Q, R, maxL, id, noise, intensity)
     figure(1)
     a3 = subplot(1, 3, 3);
     cluster(uData, truth, K, num_clusters, a3, 10, 0);
-    s = strcat('\begin{tabular}{c} Comparison of Image with Segmentation (best ove 10 kmeans replicates) for ($p$, $q$, $r$) = (', ...
+    s = strcat('\begin{tabular}{c} Comparison of Image with Segmentation (best over 10 kmeans replicates) for ($p$, $q$, $r$) = (', ...
         num2str(P), ',', num2str(Q),',', num2str(R), ')\\ -', '\end{tabular}');
     [~,h] = suplabel(s, 't');
     set(h, 'Interpreter', 'Latex', 'Fontsize', 12);

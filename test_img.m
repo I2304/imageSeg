@@ -1,7 +1,7 @@
 
 % This function defines all test cases. It takes in an index i and 
 % returns the corresponding synthetic test image rho_dense and 
-% groun_truth rho_truth. 
+% ground_truth rho_truth. 
 
 % Returns test case i with/without noise
 % True for no noise, false no noise
