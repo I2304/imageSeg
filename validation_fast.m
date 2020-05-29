@@ -5,7 +5,7 @@ clear all; close all; clc;
 
 
 % BALANCED CASE
-accuracies = zeros(9, 5); 
+accuracies = zeros(9, 7); 
 params = [...
     .5, 1, .5; ...
     2, 2, 0; ...
@@ -19,15 +19,18 @@ params = [...
 ];
 for m = 1:9
     row = params(m, :); 
-    [l, QC, VC, QT, VT] = evaluate_segmentation(row(1), row(2), row(3), 20+100/(2*m), 4, ...
+    [l, QC, VC, QT, VT] = evaluate_segmentation(row(1), row(2), row(3), 60, 4, ...
         false, 0.03); 
     accuracies(m, 1:3) = row; 
     accuracies(m, 4) = QC; 
-    accuracies(m, 5) = QT; 
+    accuracies(m, 5) = VC; 
+    accuracies(m, 6) = QT;
+    accuracies(m, 7) = VT;
 end
 
 disp('accuracies:')
 accuracies
+writematrix(accuracies,'accuracies.csv') 
 
 % Takes in: 
 %  P: the value of p to be used in the normalization
@@ -37,45 +40,45 @@ accuracies
 %  index: the id of the image (clean images: ids 1-4)
 %  noise: true if noise wanted 
 %  intensity: intensity of noise when noise == true (0~1)
-function [l, QC, QT] = evaluate_segmentation(P, Q, R, maxL, id, noise, intensity)
+function [l, QC, VC, QT, VT] = evaluate_segmentation(P, Q, R, maxL, id, noise, intensity)
     global M   
     global rho_matrix
     global q 
     global pr 
     
-    if Q==P+R
-        dest = ['./validation_results/balanced/', ...
-            nextname('./validation_results/balanced/figure_set','_1','')];
-    elseif Q < P+R
-        dest = ['./validation_results/smallerq/', ...
-            nextname('./validation_results/smallerq/figure_set','_1','')];
-    else 
-        dest = ['./validation_results/biggerq/', ...
-            nextname('./validation_results/biggerq/figure_set','_1','')];
-    end
-    dest = ['./validation_results/q_exp/', ...
-            nextname('./validation_results/q_exp/figure_set','_1','')];
-        
-    mkdir(dest);
+%     if Q==P+R
+%         dest = ['./validation_results/balanced/', ...
+%             nextname('./validation_results/balanced/figure_set','_1','')];
+%     elseif Q < P+R
+%         dest = ['./validation_results/smallerq/', ...
+%             nextname('./validation_results/smallerq/figure_set','_1','')];
+%     else 
+%         dest = ['./validation_results/biggerq/', ...
+%             nextname('./validation_results/biggerq/figure_set','_1','')];
+%     end
+%     dest = ['./validation_results/q_exp/', ...
+%             nextname('./validation_results/q_exp/figure_set','_1','')];
+%         
+%     mkdir(dest);
     epsilon = 10^(-3);
     % LOAD & PRE-PROCESS IMAGE --------------------------------------------
     [img, truth, num_clusters] = test_img(id, noise, intensity);
     K = num_clusters-1; 
-    figure(1)
-    a1 = subplot(2, 2, 1);
-    imagesc(img)
-    colormap(a1, gray);
-    colorbar
-    xlabel('pixel $i$', 'Interpreter', 'Latex', 'Fontsize', 11)
-    ylabel('pixel $j$', 'Interpreter', 'Latex', 'Fontsize', 11)
-    title ('Original Image', 'Interpreter', 'Latex', 'Fontsize', 11)
-    a2 = subplot(2, 2, 2);
-    imagesc(truth)
-    colormap(a2, jet); 
-    colorbar
-    xlabel('pixel $i$', 'Interpreter', 'Latex', 'Fontsize', 11)
-    ylabel('pixel $j$', 'Interpreter', 'Latex', 'Fontsize', 11)
-    title ('Ground Truth', 'Interpreter', 'Latex', 'Fontsize', 11)
+%     figure(1)
+%     a1 = subplot(2, 2, 1);
+%     imagesc(img)
+%     colormap(a1, gray);
+%     colorbar
+%     xlabel('pixel $i$', 'Interpreter', 'Latex', 'Fontsize', 11)
+%     ylabel('pixel $j$', 'Interpreter', 'Latex', 'Fontsize', 11)
+%     title ('Original Image', 'Interpreter', 'Latex', 'Fontsize', 11)
+%     a2 = subplot(2, 2, 2);
+%     imagesc(truth)
+%     colormap(a2, jet); 
+%     colorbar
+%     xlabel('pixel $i$', 'Interpreter', 'Latex', 'Fontsize', 11)
+%     ylabel('pixel $j$', 'Interpreter', 'Latex', 'Fontsize', 11)
+%     title ('Ground Truth', 'Interpreter', 'Latex', 'Fontsize', 11)
     % SET GLOBAL VARIABLES ------------------------------------------------
     rho_matrix = img;
     M = length(img); 
@@ -86,89 +89,89 @@ function [l, QC, QT] = evaluate_segmentation(P, Q, R, maxL, id, noise, intensity
     results = solve_evp(model,[-epsilon, maxL],epsilon);
     l = results.Eigenvalues;
     % EIGENFUNCTION PLOTS -------------------------------------------------
-    [a, ~] = numSubplots(K);
-    for i = 1:K
-        figure(2)
-        subplot(a(1), a(2), i)
-        plot_varphi(i, results, R)
-    end
-    figure(2); 
-    s = strcat('Eigenfunctions for ($p$, $q$, $r$) = (', ...
-        num2str(P), ',', num2str(Q),',', num2str(R), ')');
-    [~,h] = suplabel(s, 't');
-    set(h, 'Interpreter', 'Latex', 'Fontsize', 12);
-    temp=[dest,filesep,'eigenfunctions.png'];
-    if id == 1
-        set(gcf,'Position',[100 100 800 300])
-    elseif id == 2
-         set(gcf,'Position',[100 100 1200 400])
-    elseif id == 3
-        set(gcf,'Position',[100 100 700 500])
-    elseif id == 4
-        set(gcf,'Position',[100 100 1200 500])
-    end
-    saveas(gca,temp);
+%     [a, ~] = numSubplots(K);
+%     for i = 1:K
+%         figure(2)
+%         subplot(a(1), a(2), i)
+%         plot_varphi(i, results, R)
+%     end
+%     figure(2); 
+%     s = strcat('Eigenfunctions for ($p$, $q$, $r$) = (', ...
+%         num2str(P), ',', num2str(Q),',', num2str(R), ')');
+%     [~,h] = suplabel(s, 't');
+%     set(h, 'Interpreter', 'Latex', 'Fontsize', 12);
+%     temp=[dest,filesep,'eigenfunctions.png'];
+%     if id == 1
+%         set(gcf,'Position',[100 100 800 300])
+%     elseif id == 2
+%          set(gcf,'Position',[100 100 1200 400])
+%     elseif id == 3
+%         set(gcf,'Position',[100 100 700 500])
+%     elseif id == 4
+%         set(gcf,'Position',[100 100 1200 500])
+%     end
+%     saveas(gca,temp);
     % RETRIEVE EMBEDDING --------------------------------------------------
     [uData, ~] = get_embedding(results, K, R);
     
     % RUN KMEANS ON EMBEDDING ---------------------------------------------
-    figure(1)
-    a3 = subplot(2, 2, 3);
-    cluster(uData, truth, K, num_clusters, a3, 10, 0, 1);
-    s = strcat('Comparison for ($p$, $q$, $r$) = (', ...
-        num2str(P), ',', num2str(Q),',', num2str(R), ')');
-    [~,h] = suplabel(s, 't');
-    set(h, 'Interpreter', 'Latex', 'Fontsize', 12);
-    temp=[dest,filesep,'comparisons.png'];
-    h = [a1, a2, a3]; 
-    pos = get(h,'Position');
-    new = mean(cellfun(@(v)v(1),pos(1:2)));
-    set(h(3),'Position',[new,pos{end}(2:end)])
-    set(gcf,'Position',[100 100 600 500])
-    saveas(gca,temp);
-    
-    figure(3)
-    qualities_t = 1:3;
-    qualities_c = 1:3; 
+%     figure(1)
+%     a3 = subplot(2, 2, 3);
+%     cluster(uData, truth, K, num_clusters, a3, 10, 0, 1);
+%     s = strcat('Comparison for ($p$, $q$, $r$) = (', ...
+%         num2str(P), ',', num2str(Q),',', num2str(R), ')');
+%     [~,h] = suplabel(s, 't');
+%     set(h, 'Interpreter', 'Latex', 'Fontsize', 12);
+%     temp=[dest,filesep,'comparisons.png'];
+%     h = [a1, a2, a3]; 
+%     pos = get(h,'Position');
+%     new = mean(cellfun(@(v)v(1),pos(1:2)));
+%     set(h(3),'Position',[new,pos{end}(2:end)])
+%     set(gcf,'Position',[100 100 600 500])
+%     saveas(gca,temp);
+%     
+%     figure(3)
+    qualities_c = 1:30;
+    qualities_t = 1:30; 
     for i = 1:30
-        if i <= 9
-            a3 = subplot(3, 3, i);
-        end
-        [q_t, q_c] = cluster(uData, truth, K, num_clusters, a3, 1, i, 9);
+        [q_c, q_t] = cluster(uData, truth, K, num_clusters, 1, i, 9);
+        qualities_c(i) = q_c;
         qualities_t(i) = q_t;
-        qualities_c(i) = q_c;  
     end
-    s = strcat('Examples for ($p$, $q$, $r$) = (', ...
-        num2str(P), ',', num2str(Q),',', num2str(R), ')');
-    [~,h] = suplabel(s, 't');
-    set(h, 'Interpreter', 'Latex', 'Fontsize', 12);
-    s = strcat('TA averaged over 30 reps: ', {' '}, num2str(mean(qualities_t)));
-    disp(s); 
-    s = strcat('CA averaged over 30 reps: ', {' '}, num2str(mean(qualities_c)));
-    disp(s)
-    temp=[dest,filesep,'sample_segmentations.png'];
-    set(gcf,'Position',[100 100 700 500])
-    saveas(gca,temp);
-    QT = mean(qualities_t); 
+%     s = strcat('Examples for ($p$, $q$, $r$) = (', ...
+%         num2str(P), ',', num2str(Q),',', num2str(R), ')');
+%     [~,h] = suplabel(s, 't');
+%     set(h, 'Interpreter', 'Latex', 'Fontsize', 12);
+%     s = strcat('TA averaged over 30 reps: ', {' '}, num2str(mean(qualities_t)));
+%     disp(s); 
+%     s = strcat('CA averaged over 30 reps: ', {' '}, num2str(mean(qualities_c)));
+%     disp(s)
+    
+%     temp=[dest,filesep,'sample_segmentations.png'];
+%     set(gcf,'Position',[100 100 700 500])
+%     saveas(gca,temp);
     QC = mean(qualities_c); 
+    VC = std(qualities_c); 
+    QT = mean(qualities_t); 
+    VT = std(qualities_t); 
 end
 % Plots the final segmentation using kmeans on the embedding
 function [quality_t, quality_c] = cluster(data, truth, K, ...
-    num_clusters, a3, reps, i, display)
+    num_clusters, reps, i, display)
     X = reshape(data, [(length(data))^2, K]);
     clusters = reshape(kmeans(X, num_clusters, 'Replicates', reps), ...
         [(length(data)), (length(data))]); 
     [quality_t, quality_c] = compute_quality(clusters, truth);
-    if i <= display
-        imagesc(clusters)
-        colormap(a3, jet); 
-        colorbar
-        s = strcat('TA =', {' '}, num2str(round(quality_t, 2)), ...
-            '; CA =', {' '}, num2str(round(quality_c, 2)));
-        title(s, 'Interpreter', 'Latex', 'Fontsize', 11)
-        xlabel('pixel $i$', 'Interpreter', 'Latex', 'Fontsize', 11)
-        ylabel('pixel $j$', 'Interpreter', 'Latex', 'Fontsize', 11)
-    end
+%     if i <= display
+%         imagesc(clusters)
+%         colormap(a3, jet); 
+%         colorbar
+%         s = strcat('TA =', {' '}, num2str(round(quality_t, 2)), ...
+%             '; CA =', {' '}, num2str(round(quality_c, 2)));
+%         title(s, 'Interpreter', 'Latex', 'Fontsize', 11)
+%         xlabel('pixel $i$', 'Interpreter', 'Latex', 'Fontsize', 11)
+%         ylabel('pixel $j$', 'Interpreter', 'Latex', 'Fontsize', 11)
+%     end
 end
 % Computes the embedding of the image from the eigenfunctions
 function [uData, vData] = get_embedding(results, K, r)
