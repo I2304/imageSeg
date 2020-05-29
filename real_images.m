@@ -12,7 +12,10 @@ addpath('.\fuzme_matlab')
 % [l, uData, vData] = get_segmentation('./test_cases/density_2_dots/original.png', ...
 %     3/2, 2, 1/2, 2, 70, 3, 3, true);
 
-[l, uData, vData, clusters] = get_segmentation('./real_images/brain/original.png', ...
+% [l, uData, vData, clusters] = get_segmentation('./real_images/brain/original.png', ...
+%     3/2, 2, 1/2, 5, 70, 6, false);
+
+[l, uData, vData] = get_segmentation('./real_images/brain2/original.jpg', ...
     3/2, 2, 1/2, 4, 70, 5, false);
 
 % [l, uData, vData] = get_segmentation('./test_cases/pattern_12_dots/original.png', ...
@@ -43,7 +46,7 @@ addpath('.\fuzme_matlab')
 % Plots the specified range of eigenfunctions v_{minI}, ..., v_{maxI} to
 % be plotted, and returns l (the list of eigenvalues identified). It also
 % returns embeddings in terms of u and v.
-function [l, uData, vData, clusters] = get_segmentation(path, P, Q, R, K, maxL, ...
+function [l, uData, vData] = get_segmentation(path, P, Q, R, K, maxL, ...
     num_clusters, swap)
     dest = ['./image_results/' nextname('./image_results/figure_set','_1','')];
     mkdir(dest);
@@ -123,7 +126,7 @@ end
 % Plots the final segmentation using fuzzy kmeans on the embedding
 function[clusters] =  fuzzy_cluster(data, K, num_clusters, s)
     X = reshape(data, [(length(data))^2, K]);
-    out = run_fuzme(num_clusters, X, 2, 100, 1, 0.000001, 0.2, 10);
+    out = run_fuzme(num_clusters, X, 2, 100, 3, 0.000001, 0.2, 10);
     clusters = reshape(out, [length(data), length(data), num_clusters]);
     for k = 1:num_clusters
         cluster_k = clusters(:, :, k);
@@ -132,7 +135,7 @@ function[clusters] =  fuzzy_cluster(data, K, num_clusters, s)
         xlabel('pixel $i$', 'Interpreter', 'Latex', 'Fontsize', 14)
         ylabel('pixel $j$', 'Interpreter', 'Latex', 'Fontsize', 14)
         c = colorbar;
-        c.Limits = [0, 1];
+        caxis([0, 1]);
         colorTitleHandle = get(c,'Title');
         titleString = 'Cluster Probability';
         set(colorTitleHandle ,'String',titleString, 'Interpreter', 'Latex', ...
