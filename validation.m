@@ -26,6 +26,7 @@ for m = 1:9
     accuracies(m, 5) = QC; 
 end
 
+accuracies
 
 % Takes in: 
 %  P: the value of p to be used in the normalization

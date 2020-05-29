@@ -1,4 +1,5 @@
 clear all; close all; clc;
+addpath('.\fuzme_matlab')
 
 %% Main execution block
 
@@ -11,8 +12,8 @@ clear all; close all; clc;
 % [l, uData, vData] = get_segmentation('./test_cases/density_2_dots/original.png', ...
 %     3/2, 2, 1/2, 2, 70, 3, 3, true);
 
-% [l, uData, vData] = get_segmentation('./test_cases/brain/original.png', ...
-%     3/2, 2, 1/2, 9, 70, 10, 10, false);
+[l, uData, vData, clusters] = get_segmentation('./real_images/brain/original.png', ...
+    3/2, 2, 1/2, 4, 70, 5, false);
 
 % [l, uData, vData] = get_segmentation('./test_cases/pattern_12_dots/original.png', ...
 %     3/2, 2, 1/2, 11, 80, 12, 12, true);
@@ -20,11 +21,10 @@ clear all; close all; clc;
 % [l, uData, vData] = get_segmentation('./test_cases/usnccm_7_letters/original.png', ...
 %     3/2, 2, 1/2, 6, 70, 7, 7, true);
 
-% [l, uData, vData] = get_segmentation('./test_cases/flower/original.jpg', ...
-%     3/2, 1, 1/2, 4, 80, 5, false);
+% [l, uData, vData, clusters] = get_segmentation('./real_images/flower/original.jpg', ...
+%     3/2, 2, 1/2, 4, 80, 5, false);
 
-[l, uData, vData] = get_segmentation('Synthetic_Image_1_with_Noise.png', ...
-    3/2, 1, 1/2, 4, 80, 5, false);
+
 
 
 %% Segmentations Algorithm
@@ -43,7 +43,7 @@ clear all; close all; clc;
 % Plots the specified range of eigenfunctions v_{minI}, ..., v_{maxI} to
 % be plotted, and returns l (the list of eigenvalues identified). It also
 % returns embeddings in terms of u and v.
-function [l, uData, vData] = get_segmentation(path, P, Q, R, K, maxL, ...
+function [l, uData, vData, clusters] = get_segmentation(path, P, Q, R, K, maxL, ...
     num_clusters, swap)
     dest = ['./image_results/' nextname('./image_results/figure_set','_1','')];
     mkdir(dest);
@@ -69,7 +69,7 @@ function [l, uData, vData] = get_segmentation(path, P, Q, R, K, maxL, ...
     ylabel(c, '[0, 1] intensity', 'Interpreter', 'Latex', 'Fontsize', 14)
     xlabel('pixel $i$', 'Interpreter', 'Latex', 'Fontsize', 14)
     ylabel('pixel $j$', 'Interpreter', 'Latex', 'Fontsize', 14)
-    title ('Original Omage', 'Interpreter', 'Latex', 'Fontsize', 14)
+    title ('Original Image', 'Interpreter', 'Latex', 'Fontsize', 14)
     temp=[dest,filesep,'original_image.png'];
     saveas(gca,temp);
     % SET GLOBAL VARIABLES ------------------------------------------------
@@ -98,14 +98,14 @@ function [l, uData, vData] = get_segmentation(path, P, Q, R, K, maxL, ...
     % RETRIEVE EMBEDDING & KMEANS -----------------------------------------
     [uData, vData] = get_embedding(results, K, R);
     figure(3)
-    cluster(uData, K, num_clusters, ...
+    clusters = fuzzy_cluster(uData, K, num_clusters, ...
         ['Segmentation using $\{u_i\}$ : p = ' num2str(P) ' , q = ' num2str(Q) ' , r = ' num2str(R)])
     temp=[dest,filesep,'segmentation_', erase(num2str(P), '.'),...
         '_',erase(num2str(Q), '.'),'_',erase(num2str(R), '.'),'.png'];
     saveas(gca,temp);
 end
 % Plots the final segmentation using kmeans on the embedding
-function cluster(data, K, num_clusters, s)
+function[clusters] = cluster(data, K, num_clusters, s)
     X = reshape(data, [(length(data))^2, K]);
     clusters = reshape(kmeans(X, num_clusters), ...
         [(length(data)), (length(data))]);
@@ -119,6 +119,29 @@ function cluster(data, K, num_clusters, s)
     xlabel('pixel $i$', 'Interpreter', 'Latex', 'Fontsize', 14)
     ylabel('pixel $j$', 'Interpreter', 'Latex', 'Fontsize', 14)
 end
+
+% Plots the final segmentation using fuzzy kmeans on the embedding
+function[clusters] =  fuzzy_cluster(data, K, num_clusters, s)
+    X = reshape(data, [(length(data))^2, K]);
+    out = run_fuzme(num_clusters, X, 2, 100, 1, 0.000001, 0.2, 10);
+    clusters = reshape(out, [length(data), length(data), num_clusters]);
+    for k = 1:num_clusters
+        cluster_k = clusters(:, :, k);
+        imagesc(cluster_k)
+        title(s, 'Interpreter', 'Latex', 'Fontsize', 14)
+        xlabel('pixel $i$', 'Interpreter', 'Latex', 'Fontsize', 14)
+        ylabel('pixel $j$', 'Interpreter', 'Latex', 'Fontsize', 14)
+        c = colorbar;
+        c.Limits = [0, 1];
+        colorTitleHandle = get(c,'Title');
+        titleString = 'Cluster Probability';
+        set(colorTitleHandle ,'String',titleString, 'Interpreter', 'Latex', ...
+            'Fontsize', 14);
+        figure(k + 3)
+    end
+
+end
+
 % Computes the embedding of the image from the eigenfunctions
 function [uData, vData] = get_embedding(results, K, r)
     global M
