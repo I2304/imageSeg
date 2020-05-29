@@ -1,5 +1,5 @@
 clear all; close all; clc;
-addpath('.\fuzme_matlab')
+addpath('./fuzme_matlab')
 
 %% Main execution block
 
@@ -12,7 +12,7 @@ addpath('.\fuzme_matlab')
 % [l, uData, vData] = get_segmentation('./test_cases/density_2_dots/original.png', ...
 %     3/2, 2, 1/2, 2, 70, 3, 3, true);
 
-[l, uData, vData] = get_segmentation('./real_images/brain/original2.png', ...
+[l, uData, vData] = get_segmentation('./real_images/brain/original.png', ...
     3/2, 2, 1/2, 4, 70, 5, false);
 
 % [l, uData, vData] = get_segmentation('./test_cases/pattern_12_dots/original.png', ...
