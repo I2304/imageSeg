@@ -3,6 +3,7 @@ clear all; close all; clc;
 % Example: 
 % evaluate_segmentation(1, 1, 1, 60, 2, false, 0.25);  
 
+
 % BALANCED CASE
 accuracies = zeros(9, 5); 
 params = [...
