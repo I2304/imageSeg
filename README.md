@@ -16,9 +16,9 @@ The function displays the two segmentations of the image. The first segmentation
 
 You may uncomment the examples at the top of acm270project.m to run the algorithm on a few test cases. Occassionally, the segmentation quality is poor (likely due to numerical issues). If the segmentation is poor you may consider re-runing the command to get a more accurate segmentation. 
 
-Several examples of the algorithm output, for different values of P, Q, and R are available in the test_cases folder. The test_cases folder has several subfolders, each of which corresponds to a certain test image. In each of these image subfolders, one can find the original image and example segmentations. For the example segmentations, the naming convention is as follows: 
-- segmentation_P_Q_R
+Several examples of the algorithm output, for different values of P, Q, and R are available in the validation_results folder. 
 
-For example: 
-- segmentation_3/2_2_1/2 
-corresponds to segmentation using the normalized continuum Laplacian operator
+References 
+- Stephen Cobeldick (2020). Next Available Filename (https://www.mathworks.com/matlabcentral/fileexchange/64108-next-available-filename), MATLAB Central File Exchange. Retrieved May 30, 2020.
+- Yi Cao (2020). Munkres Assignment Algorithm (https://www.mathworks.com/matlabcentral/fileexchange/20328-munkres-assignment-algorithm), MATLAB Central File Exchange. Retrieved May 30, 2020.
+- Ben Barrowes (2020). suplabel (https://www.mathworks.com/matlabcentral/fileexchange/7772-suplabel), MATLAB Central File Exchange. Retrieved May 30, 2020.
