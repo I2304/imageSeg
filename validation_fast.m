@@ -19,8 +19,8 @@ params = [...
 ];
 for m = 1:9
     row = params(m, :); 
-    [l, QC, VC, QT, VT] = evaluate_segmentation(row(1), row(2), row(3), 60, 4, ...
-        false, 0.03); 
+    [l, QC, VC, QT, VT] = evaluate_segmentation(row(1), row(2), row(3), 60, 3, ...
+        true, 0.25); 
     accuracies(m, 1:3) = row; 
     accuracies(m, 4) = QC; 
     accuracies(m, 5) = VC; 

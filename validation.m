@@ -19,15 +19,14 @@ params = [...
 ];
 for m = 1:9
     row = params(m, :); 
-    [l, QC, VC, QT, VT] = evaluate_segmentation(row(1), row(2), row(3), 20+100/(2*m), 4, ...
-        false, 0.03); 
+    [l, QC, VC, QT, VT] = evaluate_segmentation(row(1), row(2), row(3), 60, 4, ...
+        true, 0.03); 
     accuracies(m, 1:3) = row; 
     accuracies(m, 4) = QC; 
-    accuracies(m, 5) = QT; 
+    accuracies(m, 5) = VC; 
+    accuracies(m, 6) = QT; 
+    accuracies(m, 7) = VT;
 end
-
-disp('accuracies:')
-accuracies
 
 % Takes in: 
 %  P: the value of p to be used in the normalization
@@ -53,9 +52,6 @@ function [l, QC, QT] = evaluate_segmentation(P, Q, R, maxL, id, noise, intensity
         dest = ['./validation_results/biggerq/', ...
             nextname('./validation_results/biggerq/figure_set','_1','')];
     end
-    dest = ['./validation_results/q_exp/', ...
-            nextname('./validation_results/q_exp/figure_set','_1','')];
-        
     mkdir(dest);
     epsilon = 10^(-3);
     % LOAD & PRE-PROCESS IMAGE --------------------------------------------
@@ -333,7 +329,7 @@ function [quality_t, quality_c] = compute_quality(clusters, truth)
             end
         end
     end
-    % overlal quality
+    % overall quality
     quality_t = sum(sum(truth==cpy))/(length(cpy))^2;
     % quality of clusters only
     quality_c = (sum(sum((truth==cpy).*(truth~=1))))/(sum((sum(truth~=1)))); 
