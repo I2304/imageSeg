@@ -20,7 +20,7 @@ params = [...
 for m = 1:9
     row = params(m, :); 
     [l, QC, VC, QT, VT] = evaluate_segmentation(row(1), row(2), row(3), 60, 4, ...
-        false, 0.03); 
+        true, 0.03);
     accuracies(m, 1:3) = row; 
     accuracies(m, 4) = QC; 
     accuracies(m, 5) = VC; 
@@ -30,7 +30,8 @@ end
 
 disp('accuracies:')
 accuracies
-writematrix(accuracies,'accuracies.csv') 
+%writematrix(accuracies,'accuracies.csv') 
+csvwrite('accuracies.csv', accuracies)
 
 % Takes in: 
 %  P: the value of p to be used in the normalization
