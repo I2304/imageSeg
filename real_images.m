@@ -65,7 +65,7 @@ function [l, uData, vData] = get_segmentation(path, P, Q, R, K, maxL, ...
     figure(1)
     imagesc(img)
     colormap(gray)
-    c = colorbar; 
+    c = colorbar;
     ylabel(c, '[0, 1] intensity', 'Interpreter', 'Latex', 'Fontsize', 14)
     xlabel('pixel $i$', 'Interpreter', 'Latex', 'Fontsize', 14)
     ylabel('pixel $j$', 'Interpreter', 'Latex', 'Fontsize', 14)
@@ -127,17 +127,16 @@ function[clusters] =  fuzzy_cluster(data, K, num_clusters, s)
     clusters = reshape(out, [length(data), length(data), num_clusters]);
     for k = 1:num_clusters
         cluster_k = clusters(:, :, k);
-        imagesc(cluster_k)
+        subplot(2, 3, k); imagesc(cluster_k)
         title(s, 'Interpreter', 'Latex', 'Fontsize', 14)
         xlabel('pixel $i$', 'Interpreter', 'Latex', 'Fontsize', 14)
         ylabel('pixel $j$', 'Interpreter', 'Latex', 'Fontsize', 14)
         c = colorbar;
         c.Limits = [0, 1];
         colorTitleHandle = get(c,'Title');
-        titleString = 'Cluster Probability';
-        set(colorTitleHandle ,'String',titleString, 'Interpreter', 'Latex', ...
-            'Fontsize', 14);
-        figure(k + 3)
+%         titleString = 'Cluster Probability';
+%         set(colorTitleHandle ,'String',titleString, 'Interpreter', 'Latex', ...
+%             'Fontsize', 14);
     end
 
 end

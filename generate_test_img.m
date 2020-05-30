@@ -11,6 +11,7 @@ end
 function [] = plot_img(img, plot_title)
     figure()
     imagesc(img)
+    colormap(gray)
     c = colorbar; 
     ylabel(c, '[0, 1] Intensity', 'Interpreter', 'Latex', 'Fontsize', 11)
     xlabel('pixel $i$', 'Interpreter', 'Latex', 'Fontsize', 11)
