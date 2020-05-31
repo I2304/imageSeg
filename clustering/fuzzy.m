@@ -1,0 +1,26 @@
+% Plots the final segmentation using fuzzy kmeans on the embedding
+function[clusters] =  fuzzy(data, figure_no, p, q, r, k, K, s)
+    X = reshape(data, [(length(data))^2, k]);
+    out = run_fuzme(K, X, 2, 100, 1, 0.000001, 0.2, 10);
+    clusters = reshape(out, [length(data), length(data), K]);
+    [a, ~] = numSubplots(K);
+    for k = 1:K
+        cluster_k = clusters(:, :, k);
+        subplot(a(1), a(2), k); imagesc(cluster_k)
+        title(s, 'Interpreter', 'Latex', 'Fontsize', 14)
+        c = colorbar;
+        c.Limits = [0, 1];
+    end
+    s = ['Soft clusterings using $p$ = ' num2str(p)...
+        ' , $q$ = ' num2str(q) ...
+        ' , $r$ = ' num2str(r) ...
+        ' , $k$ = ' num2str(k) ...
+        ' , $K$ = ' num2str(K-1)];
+    suptitle(s, 'Interpreter', 'Latex', 'Fontsize', 14);
+    saveas(figure(figure_no),[pwd, '/res_images/', filename, ...
+        '/clusters_p_', erase(num2str(p), '.')...
+        '_q_', erase(num2str(q), '.'), ...
+        '_r_', erase(num2str(r), '.'), ...
+        '.fig']);
+    sgtitle(s, 'Interpreter', 'Latex', 'Fontsize', 14)
+end
