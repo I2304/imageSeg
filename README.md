@@ -22,3 +22,4 @@ each (p, q, r) value
   - experiment_smallq.m for the q < p + r case
   - experiment_bigq.m for the q > p + r case
 
+Pre-run experiments are available at https://drive.google.com/drive/folders/1XMocBjMxALtrnGFrAWPaXVusUQXl6CFS?usp=sharing
