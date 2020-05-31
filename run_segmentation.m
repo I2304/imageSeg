@@ -39,6 +39,7 @@ function [TA, CA] = run_segmentation(...
         if synthetic
             [TA, CA] = get_accuracy(clusters, truth);
             plot_clusters(clusters, 3, filename, p, q, r, k, K, false, TA, CA);
+            K
         else
             TA = -1; CA = -1; 
             plot_clusters(clusters, 3, filename, p, q, r, k, K);
