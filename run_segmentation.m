@@ -39,12 +39,13 @@ function [TA, CA] = run_segmentation(...
         if synthetic
             [TA, CA] = get_accuracy(clusters, truth);
             plot_clusters(clusters, 3, filename, p, q, r, k, K, false, TA, CA);
-            K
         else
             TA = -1; CA = -1; 
             plot_clusters(clusters, 3, filename, p, q, r, k, K);
         end
     elseif strcmp(type, 'soft')
-        fuzzy(u_data, 3, p, q, r, k, K, s); 
+        TA = -1; CA = -1; 
+        figure(3)
+        fuzzy(u_data, 3, p, q, r, k, K, filename); 
     end
 end
